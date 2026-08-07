@@ -1,0 +1,282 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   agent-portal design system — "warm minimal"
+   Feel: claude.ai × chatgpt.com — a warm paper canvas, calm and spacious,
+   generous rounded shapes, comfortable controls, soft elevation. Neutral
+   near-black primary actions (ChatGPT-clean) with a warm clay accent (Claude)
+   used sparingly on links, active nav, focus, and brand moments. An editorial
+   serif carries the largest display headings.
+   Components use semantic tokens (bg-surface, text-brand) — never raw hex.
+   ========================================================================= */
+
+@theme inline {
+  /* Typography */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-newsreader);
+  --font-heading: var(--font-geist-sans);
+
+  /* Comfortable, roomy body — not dense (14px controls, 15px prose base). */
+  --text-sm: 0.875rem; /* 14px */
+  --text-sm--line-height: 1.45rem;
+
+  /* Radius scale — soft & generous. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px; /* inputs · buttons */
+  --radius-xl: 14px; /* cards · popovers · tables */
+  --radius-2xl: 20px; /* modals · ⌘K */
+  --radius-3xl: 26px;
+  --radius-4xl: 999px; /* pills */
+
+  /* Soft, warm elevation. */
+  --shadow-xs: 0 1px 2px rgba(50, 46, 40, 0.04);
+  --shadow-sm: 0 1px 2px rgba(50, 46, 40, 0.05), 0 1px 3px rgba(50, 46, 40, 0.04);
+  --shadow-md: 0 2px 6px rgba(50, 46, 40, 0.06), 0 4px 14px rgba(50, 46, 40, 0.05);
+  --shadow-lg: 0 8px 30px rgba(50, 46, 40, 0.12);
+  --shadow-xl: 0 16px 48px rgba(50, 46, 40, 0.16);
+
+  /* --- shadcn semantic tokens (values below in :root / .dark) --- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* --- design-system tokens --- */
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-overlay: var(--overlay);
+  --color-hairline: var(--border-subtle);
+  --color-strong: var(--border-strong);
+  --color-faint: var(--text-tertiary);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-info: var(--brand);
+  --color-info-bg: var(--info-bg);
+  --color-chart-6: var(--chart-6);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+}
+
+/* ---------------------------------------------------------------------------
+   LIGHT theme (default) — warm paper
+   --------------------------------------------------------------------------- */
+:root {
+  --background: #faf9f5; /* warm paper canvas */
+  --surface: #ffffff;
+  --raised: #f2f0e9;
+  --overlay: #ffffff;
+
+  --border-subtle: #ece9df;
+  --border: #e4e1d6;
+  --border-strong: #d6d2c4;
+
+  --foreground: #262622; /* warm near-black */
+  --text-secondary: #6b6860;
+  --text-tertiary: #97948a;
+
+  /* accent — Claude clay (used sparingly: links, active, focus, brand) */
+  --brand: #c05f3c;
+  --brand-foreground: #ffffff;
+  --brand-muted: color-mix(in oklab, #c05f3c 12%, transparent);
+
+  /* primary action — neutral near-black (ChatGPT-clean) */
+  --solid: #2a2824;
+  --solid-foreground: #faf9f5;
+
+  --success: #4d7c46;
+  --warning: #a7761f;
+  --error: #b6402f;
+  --success-bg: color-mix(in oklab, var(--success) 13%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 15%, transparent);
+  --error-bg: color-mix(in oklab, var(--error) 12%, transparent);
+  --info-bg: var(--brand-muted);
+
+  --chart-1: #c05f3c;
+  --chart-2: #4d7c46;
+  --chart-3: #c1912e;
+  --chart-4: #5b7c9e;
+  --chart-5: #4c9a8f;
+  --chart-6: #9b5b8a;
+  --chart-grid: #e4e1d6;
+  --chart-axis: #97948a;
+
+  --radius: 0.875rem;
+
+  /* shadcn wiring → design tokens */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--overlay);
+  --popover-foreground: var(--foreground);
+  --primary: var(--solid);
+  --primary-foreground: var(--solid-foreground);
+  --secondary: var(--raised);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--raised);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--raised); /* neutral hover surface — NOT the brand accent */
+  --accent-foreground: var(--foreground);
+  --destructive: var(--error);
+  --input: var(--border);
+  --ring: var(--brand);
+
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--raised);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--brand);
+}
+
+/* ---------------------------------------------------------------------------
+   DARK theme — warm charcoal
+   --------------------------------------------------------------------------- */
+.dark {
+  --background: #211f1c;
+  --surface: #2a2825;
+  --raised: #35322e;
+  --overlay: #2f2c29;
+
+  --border-subtle: #333029;
+  --border: #403c35;
+  --border-strong: #4d483f;
+
+  --foreground: #f0eee6;
+  --text-secondary: #b2ada2;
+  --text-tertiary: #837e73;
+
+  --brand: #d97757; /* brighter clay for dark */
+  --brand-foreground: #ffffff;
+  --brand-muted: color-mix(in oklab, #d97757 20%, transparent);
+
+  --solid: #f0eee6; /* light neutral primary on dark (ChatGPT-style) */
+  --solid-foreground: #262622;
+
+  --success: #7fb069;
+  --warning: #e0a32e;
+  --error: #e0685e;
+  --success-bg: color-mix(in oklab, var(--success) 16%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 16%, transparent);
+  --error-bg: color-mix(in oklab, var(--error) 16%, transparent);
+  --info-bg: var(--brand-muted);
+
+  --chart-1: #d97757;
+  --chart-2: #7fb069;
+  --chart-3: #e0b84e;
+  --chart-4: #7f9cc4;
+  --chart-5: #5fb5a8;
+  --chart-6: #c07ba8;
+  --chart-grid: #403c35;
+  --chart-axis: #837e73;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--overlay);
+  --popover-foreground: var(--foreground);
+  --primary: var(--solid);
+  --primary-foreground: var(--solid-foreground);
+  --secondary: var(--raised);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--raised);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--raised);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--error);
+  --input: var(--border);
+  --ring: var(--brand);
+
+  --sidebar: #1b1916;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--raised);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--brand);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+  }
+  ::selection {
+    background: var(--brand-muted);
+  }
+}
+
+@layer utilities {
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 4px var(--brand);
+  }
+  /* 45° stripe overlay for the budget-meter "exceeded" state */
+  .stripe-overlay {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      color-mix(in oklab, var(--background) 35%, transparent) 5px,
+      color-mix(in oklab, var(--background) 35%, transparent) 10px
+    );
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
