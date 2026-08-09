@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DownloadIcon } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,10 +14,16 @@ import {
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useUsage } from "@/features/projects/hooks";
+import type { UsageBucket } from "@/types";
 import { usd } from "@/features/invoices/invoice-ui";
+import { toCsv, download } from "@/lib/csv";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
+import { QueryError } from "@/components/query-error";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -28,6 +35,33 @@ import {
 } from "@/components/ui/table";
 
 type Granularity = "day" | "month" | "year";
+type GroupBy = "agent" | "model";
+
+function fmt(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+function daysAgo(n: number) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - n);
+  return d;
+}
+function startOfMonth() {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+}
+
+const PRESETS: Array<{ key: string; label: string; range: () => { from: string; to: string } }> = [
+  { key: "7d", label: "7d", range: () => ({ from: fmt(daysAgo(7)), to: fmt(new Date()) }) },
+  { key: "30d", label: "30d", range: () => ({ from: fmt(daysAgo(30)), to: fmt(new Date()) }) },
+  { key: "90d", label: "90d", range: () => ({ from: fmt(daysAgo(90)), to: fmt(new Date()) }) },
+  { key: "month", label: "This month", range: () => ({ from: fmt(startOfMonth()), to: fmt(new Date()) }) },
+];
+
+const STATUS_TONE: Record<string, { text: string; dot: string }> = {
+  ok: { text: "text-success", dot: "bg-success" },
+  error: { text: "text-error", dot: "bg-error" },
+  skipped: { text: "text-muted-foreground", dot: "bg-muted-foreground" },
+};
 
 function periodLabel(period: string, granularity: Granularity) {
   const d = new Date(period);
@@ -38,11 +72,33 @@ function periodLabel(period: string, granularity: Granularity) {
   return d.toLocaleDateString("en-US", { year: "numeric", timeZone: "UTC" });
 }
 
+/** Collapse period-split buckets into one total row per agent/model. */
+function aggregate(buckets: UsageBucket[], groupBy: GroupBy) {
+  const map = new Map<
+    string,
+    { key: string; runs: number; tokens: number; costUsd: number; billedUsd: number }
+  >();
+  for (const b of buckets) {
+    const g = (groupBy === "agent" ? b.agentType : b.model) ?? "unknown";
+    const cur = map.get(g) ?? { key: g, runs: 0, tokens: 0, costUsd: 0, billedUsd: 0 };
+    cur.runs += b.runs;
+    cur.tokens += b.inputTokens + b.outputTokens + b.embeddingTokens;
+    cur.costUsd += b.costUsd;
+    cur.billedUsd += b.billedUsd;
+    map.set(g, cur);
+  }
+  return [...map.values()].sort((a, b) => b.billedUsd - a.billedUsd);
+}
+
 export default function UsagePage() {
   const { projectId } = useProjectScope();
   const [granularity, setGranularity] = useState<Granularity>("day");
-  const usage = useUsage(projectId, { granularity });
-  const byAgent = useUsage(projectId, { granularity: "month", groupBy: "agent" });
+  const [groupBy, setGroupBy] = useState<GroupBy>("agent");
+  const [range, setRange] = useState(() => PRESETS[3].range()); // "This month"
+  const [preset, setPreset] = useState("month");
+
+  const usage = useUsage(projectId, { granularity, from: range.from, to: range.to });
+  const breakdown = useUsage(projectId, { groupBy, from: range.from, to: range.to });
 
   const chartData =
     usage.data?.buckets.map((b) => ({
@@ -52,6 +108,35 @@ export default function UsagePage() {
     })) ?? [];
 
   const totals = usage.data?.totals;
+  const rows = breakdown.data ? aggregate(breakdown.data.buckets, groupBy) : [];
+
+  function setPresetRange(key: string) {
+    setPreset(key);
+    const p = PRESETS.find((x) => x.key === key);
+    if (p) setRange(p.range());
+  }
+  function setCustom(field: "from" | "to", value: string) {
+    setPreset("custom");
+    setRange((r) => ({ ...r, [field]: value }));
+  }
+
+  function exportCsv() {
+    const buckets = usage.data?.buckets ?? [];
+    if (buckets.length === 0) return;
+    const csv = toCsv(
+      ["period", "runs", "inputTokens", "outputTokens", "embeddingTokens", "costUsd", "billedUsd"],
+      buckets.map((b) => [
+        b.period,
+        b.runs,
+        b.inputTokens,
+        b.outputTokens,
+        b.embeddingTokens,
+        b.costUsd,
+        b.billedUsd,
+      ]),
+    );
+    download(`usage-${projectId}-${range.from}-to-${range.to}.csv`, csv);
+  }
 
   return (
     <div className="space-y-8">
@@ -59,16 +144,61 @@ export default function UsagePage() {
         title="Usage"
         description="Every run metered — raw provider cost and billed price, side by side."
         action={
-          <Tabs value={granularity} onValueChange={(v) => setGranularity(v as Granularity)}>
-            <TabsList>
-              <TabsTrigger value="day">Day</TabsTrigger>
-              <TabsTrigger value="month">Month</TabsTrigger>
-              <TabsTrigger value="year">Year</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCsv}
+            disabled={!usage.data || usage.data.buckets.length === 0}
+          >
+            <DownloadIcon />
+            Export CSV
+          </Button>
         }
       />
 
+      {/* toolbar: date range + granularity */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {PRESETS.map((p) => (
+            <Button
+              key={p.key}
+              variant={preset === p.key ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setPresetRange(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
+          <span className="mx-1 text-faint">·</span>
+          <Input
+            type="date"
+            aria-label="From date"
+            value={range.from}
+            max={range.to}
+            onChange={(e) => setCustom("from", e.target.value)}
+            className="h-9 w-auto"
+          />
+          <span className="text-faint">→</span>
+          <Input
+            type="date"
+            aria-label="To date"
+            value={range.to}
+            min={range.from}
+            onChange={(e) => setCustom("to", e.target.value)}
+            className="h-9 w-auto"
+          />
+        </div>
+
+        <Tabs value={granularity} onValueChange={(v) => setGranularity(v as Granularity)}>
+          <TabsList>
+            <TabsTrigger value="day">Day</TabsTrigger>
+            <TabsTrigger value="month">Month</TabsTrigger>
+            <TabsTrigger value="year">Year</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* totals */}
       <div className="grid gap-4 sm:grid-cols-4">
         {[
           { label: "Runs", value: totals ? String(totals.runs) : null },
@@ -96,6 +226,27 @@ export default function UsagePage() {
         ))}
       </div>
 
+      {/* status breakdown */}
+      {totals && Object.keys(totals.statuses).length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-faint">Outcomes:</span>
+          {Object.entries(totals.statuses).map(([k, v]) => {
+            const tone = STATUS_TONE[k] ?? { text: "text-muted-foreground", dot: "bg-muted-foreground" };
+            return (
+              <span
+                key={k}
+                className="inline-flex items-center gap-1.5 rounded-full bg-raised px-2 py-0.5 text-xs"
+              >
+                <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
+                <span className="text-muted-foreground">{k}</span>
+                <span className={cn("font-medium tabular-nums", tone.text)}>{v}</span>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* time series */}
       <Card>
         <CardHeader className="pb-2">
           <CardDescription>Billed per {granularity}</CardDescription>
@@ -103,6 +254,8 @@ export default function UsagePage() {
         <CardContent>
           {usage.isLoading ? (
             <Skeleton className="h-64 w-full" />
+          ) : usage.isError ? (
+            <QueryError message="Couldn't load usage." onRetry={() => void usage.refetch()} />
           ) : chartData.length === 0 ? (
             <p className="py-16 text-center text-sm text-muted-foreground">
               No runs in this range yet.
@@ -144,16 +297,27 @@ export default function UsagePage() {
         </CardContent>
       </Card>
 
+      {/* breakdown */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-faint">This month by agent</h2>
-        {byAgent.isLoading ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-medium text-faint">Breakdown</h2>
+          <Tabs value={groupBy} onValueChange={(v) => setGroupBy(v as GroupBy)}>
+            <TabsList>
+              <TabsTrigger value="agent">By agent</TabsTrigger>
+              <TabsTrigger value="model">By model</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        {breakdown.isLoading ? (
           <Skeleton className="h-40 w-full rounded-xl" />
-        ) : byAgent.data && byAgent.data.buckets.length > 0 ? (
+        ) : breakdown.isError ? (
+          <QueryError message="Couldn't load the breakdown." onRetry={() => void breakdown.refetch()} />
+        ) : rows.length > 0 ? (
           <div className="overflow-x-auto rounded-xl border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Agent</TableHead>
+                  <TableHead>{groupBy === "agent" ? "Agent" : "Model"}</TableHead>
                   <TableHead className="text-right">Runs</TableHead>
                   <TableHead className="text-right">Tokens</TableHead>
                   <TableHead className="text-right">Provider cost</TableHead>
@@ -161,24 +325,24 @@ export default function UsagePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {byAgent.data.buckets.map((b) => (
-                  <TableRow key={`${b.period}-${b.agentType}`}>
-                    <TableCell className="font-mono text-xs">{b.agentType}</TableCell>
-                    <TableCell className="text-right tabular-nums">{b.runs}</TableCell>
+                {rows.map((r) => (
+                  <TableRow key={r.key}>
+                    <TableCell className="font-mono text-xs">{r.key}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.runs}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {(b.inputTokens + b.outputTokens + b.embeddingTokens).toLocaleString()}
+                      {r.tokens.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {usd(b.costUsd)}
+                      {usd(r.costUsd)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{usd(b.billedUsd)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{usd(r.billedUsd)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No agent activity this month.</p>
+          <p className="text-sm text-muted-foreground">No activity in this range.</p>
         )}
       </section>
     </div>

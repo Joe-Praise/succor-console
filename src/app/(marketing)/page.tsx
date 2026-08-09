@@ -18,7 +18,7 @@ import { Reveal } from "@/components/marketing/reveal";
 import { SectionHeading, CtaBand, Faq } from "@/components/marketing/section";
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} — production AI agents for your product`,
+  title: `${BRAND_NAME} — production agents, workflows & automation`,
   description: BRAND_TAGLINE,
 };
 
@@ -42,7 +42,7 @@ const STEPS = [
     n: "01",
     title: "Create a project",
     body: "Get two scoped keys: one to call us, one that signs our calls back to you. Shown once, hashed at rest, revocable instantly.",
-    code: `AGENT_SERVICE_API_KEY=ask_live_••••••••\nAGENT_CALLBACK_KEY=cbk_••••••••`,
+    code: `SUCCOR_API_KEY=ask_live_••••••••\nSUCCOR_CALLBACK_KEY=cbk_••••••••`,
   },
   {
     n: "02",
@@ -54,7 +54,7 @@ const STEPS = [
     n: "03",
     title: "Receive the result",
     body: "The agent delivers validated output to your callback endpoint, signed with your key. Your app never polls.",
-    code: `PUT /api/agent-callback\nX-Agent-API-Key: cbk_••••••••\n\n{ "quiz": [ … ], "agent_initiated": true }`,
+    code: `PUT /api/agent-callback\nX-Succor-Callback-Key: cbk_••••••••\n\n{ "quiz": [ … ], "agent_initiated": true }`,
   },
 ];
 
@@ -124,7 +124,7 @@ export default function LandingPage() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center md:pt-28">
         <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">
-          AI agents as a service
+          Agents, workflows &amp; automation
         </p>
         <h1
           className="mx-auto mt-4 max-w-3xl font-serif text-foreground"
@@ -135,13 +135,14 @@ export default function LandingPage() {
             letterSpacing: "-0.015em",
           }}
         >
-          Production AI agents for your product. Metered, billed, done.
+          Production agents for your product. Metered, billed, done.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
           {BRAND_NAME} puts {MARKETING_CATALOG.length} curated, injection-guarded agents for
           SEO, content, vision, and e-learning behind one API. Your app makes one call — we
           run the model, validate the output, meter every token, and deliver the result to
-          your callback. You ship the feature. We run the machinery.
+          your callback. You ship the feature. We run the machinery — agents today,
+          workflows, integrations, and automation next.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <Button size="lg" render={<Link href="/register" />}>

@@ -105,7 +105,7 @@ export function MarketingFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-10 text-sm text-muted-foreground sm:flex-row">
         <p>
           <span className="font-mono text-foreground">{BRAND_NAME.toLowerCase()}</span> — production
-          AI agents, metered and billed.
+          agents, workflows, and automation, metered and billed.
         </p>
         <nav className="flex items-center gap-5">
           <Link href="/agents" className="hover:text-foreground">

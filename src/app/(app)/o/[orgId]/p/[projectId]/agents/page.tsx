@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +11,12 @@ import { BoxesIcon, PlusIcon, Loader2Icon } from "lucide-react";
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useCatalog, useAgentRequests, useCreateAgentRequest } from "@/features/projects/hooks";
 import { RoleGate } from "@/features/orgs/org-context";
+import { RequestTimeline } from "@/features/agents/request-timeline";
+import { parseEndpoint } from "@/lib/catalog";
+import type { CatalogEntry } from "@/types";
 import { PageHeader } from "@/components/page-header";
+import { CodeBlock } from "@/components/code-block";
+import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +24,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge, type Status } from "@/components/ui/status-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -27,9 +32,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ApiError } from "@/api/client";
 
 const CATEGORIES = ["all", "seo", "content", "analysis", "elearning", "vision"] as const;
+
+const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
 const RequestSchema = z.object({
   title: z.string().min(1, "Give it a short title").max(120),
@@ -116,12 +124,69 @@ function RequestAgentDialog({
   );
 }
 
+/** Read-only reference drawer for a single catalog agent. */
+function AgentDetailSheet({
+  entry,
+  docsHref,
+  onOpenChange,
+}: {
+  entry: CatalogEntry | null;
+  docsHref: string;
+  onOpenChange: (o: boolean) => void;
+}) {
+  return (
+    <Sheet open={!!entry} onOpenChange={(o) => !o && onOpenChange(false)}>
+      <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-md">
+        {entry ? (
+          <>
+            <SheetHeader>
+              <div className="flex items-center justify-between gap-2 pr-8">
+                <SheetTitle>{entry.name}</SheetTitle>
+                {entry.enabledForProject ? (
+                  <Badge className="bg-success-bg text-success">Enabled</Badge>
+                ) : (
+                  <Badge variant="secondary">Not enabled</Badge>
+                )}
+              </div>
+              <SheetDescription className="font-mono text-xs">{entry.agentType}</SheetDescription>
+            </SheetHeader>
+            <div className="space-y-5 p-4 pt-0">
+              <p className="text-sm text-muted-foreground">{entry.description}</p>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-faint">Request</p>
+                <CodeBlock
+                  label={`${parseEndpoint(entry.endpoint).method} ${parseEndpoint(entry.endpoint).path}`}
+                  code={pretty(entry.requestExample)}
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-faint">Callback</p>
+                <CodeBlock
+                  label={`${entry.callbackMethod} <your-app>${entry.callbackPath}`}
+                  code={pretty(entry.callbackExample)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                render={<Link href={docsHref}>Open full integration guide</Link>}
+              />
+            </div>
+          </>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export default function AgentsPage() {
-  const { projectId } = useProjectScope();
+  const { orgId, projectId } = useProjectScope();
   const catalog = useCatalog(projectId);
   const requests = useAgentRequests(projectId);
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("all");
   const [requestOpen, setRequestOpen] = useState(false);
+  const [selected, setSelected] = useState<CatalogEntry | null>(null);
 
   const entries =
     catalog.data?.catalog.filter((e) => category === "all" || e.category === category) ?? [];
@@ -157,10 +222,24 @@ export default function AgentsPage() {
             <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
         </div>
+      ) : catalog.isError ? (
+        <QueryError message="Couldn't load the catalog." onRetry={() => void catalog.refetch()} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((e) => (
-            <Card key={e.agentType} className="flex h-full flex-col">
+            <Card
+              key={e.agentType}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelected(e)}
+              onKeyDown={(ev) => {
+                if (ev.key === "Enter" || ev.key === " ") {
+                  ev.preventDefault();
+                  setSelected(e);
+                }
+              }}
+              className="flex h-full cursor-pointer flex-col transition-colors hover:border-strong"
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base">{e.name}</CardTitle>
@@ -181,7 +260,7 @@ export default function AgentsPage() {
           ))}
         </div>
       )}
-      {!catalog.isLoading && entries.length === 0 ? (
+      {!catalog.isLoading && !catalog.isError && entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">No agents in this category.</p>
       ) : null}
 
@@ -189,18 +268,23 @@ export default function AgentsPage() {
         <h2 className="text-sm font-medium text-faint">Your agent requests</h2>
         {requests.isLoading ? (
           <Skeleton className="h-24 w-full rounded-xl" />
+        ) : requests.isError ? (
+          <QueryError
+            message="Couldn't load your requests."
+            onRetry={() => void requests.refetch()}
+          />
         ) : requests.data && requests.data.requests.length > 0 ? (
           <div className="space-y-2">
             {requests.data.requests.map((r) => (
               <div
                 key={r._id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3"
+                className="space-y-3 rounded-xl border border-border bg-surface px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
                   <p className="truncate text-sm text-muted-foreground">{r.description}</p>
                 </div>
-                <StatusBadge status={(r.status ?? "pending") as Status} />
+                <RequestTimeline status={r.status ?? "pending"} />
               </div>
             ))}
           </div>
@@ -213,6 +297,11 @@ export default function AgentsPage() {
       </section>
 
       <RequestAgentDialog open={requestOpen} onOpenChange={setRequestOpen} />
+      <AgentDetailSheet
+        entry={selected}
+        docsHref={`/o/${orgId}/p/${projectId}/docs`}
+        onOpenChange={(o) => !o && setSelected(null)}
+      />
     </div>
   );
 }

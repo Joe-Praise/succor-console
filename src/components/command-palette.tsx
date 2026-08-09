@@ -21,6 +21,7 @@ import {
   WebhookIcon,
   GaugeIcon,
   Building2Icon,
+  BookOpenIcon,
 } from "lucide-react";
 
 import {
@@ -91,6 +92,7 @@ export function CommandPalette() {
         { label: "Usage", href: `${p}/usage`, icon: BarChart3Icon },
         { label: "API keys", href: `${p}/keys`, icon: KeyRoundIcon },
         { label: "Agents", href: `${p}/agents`, icon: BoxesIcon },
+        { label: "Docs", href: `${p}/docs`, icon: BookOpenIcon },
         { label: "Callbacks", href: `${p}/callbacks`, icon: WebhookIcon },
         { label: "Logs", href: `${p}/logs`, icon: ScrollTextIcon },
         { label: "Playground", href: `${p}/playground`, icon: FlaskConicalIcon },
