@@ -195,7 +195,7 @@ export default function DesignSystemPage() {
       {/* header */}
       <header className="flex flex-wrap items-end justify-between gap-4 pb-8">
         <div className="space-y-1">
-          <p className="font-mono text-xs tracking-wide text-brand">agent-portal · C0</p>
+          <p className="font-mono text-xs tracking-wide text-brand">succor · C0</p>
           <h1
             className="font-serif text-foreground"
             style={{ fontSize: 44, lineHeight: "48px", fontWeight: 500, letterSpacing: "-0.01em" }}

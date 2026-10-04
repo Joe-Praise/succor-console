@@ -21,11 +21,11 @@ export const CATEGORY_META: Record<
 > = {
   seo: {
     label: "SEO",
-    blurb: "Programmatic landing pages, internal-link strategy, SERP gap analysis, vision-written alt text.",
+    blurb: "Programmatic landing pages, internal-link strategy, SERP gap analysis, and image alt text.",
   },
   elearning: {
     label: "E-learning",
-    blurb: "Turn the web's best material into structured courses, quizzes, learning paths, and personalized nudges.",
+    blurb: "Turn source material into structured courses, quizzes, learning paths, and personalized nudges.",
   },
   analysis: {
     label: "Analysis",
@@ -37,7 +37,7 @@ export const CATEGORY_META: Record<
   },
   vision: {
     label: "Vision",
-    blurb: "Image understanding at gallery scale — taxonomy tagging and SEO-rich alt text.",
+    blurb: "Image understanding at scale — taxonomy tagging and SEO-rich alt text.",
   },
 };
 

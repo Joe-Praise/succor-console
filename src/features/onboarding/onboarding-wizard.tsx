@@ -319,7 +319,7 @@ export function OnboardingWizard() {
             <CardHeader>
               <CardTitle>Almost there</CardTitle>
               <CardDescription>
-                Your organization is pending approval — you can explore the portal now;
+                Your organization is pending approval — you can explore the console now;
                 agents run once it&apos;s approved.
               </CardDescription>
             </CardHeader>

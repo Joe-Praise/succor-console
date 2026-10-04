@@ -166,7 +166,7 @@ function DangerZone() {
             size="sm"
             disabled={deleteOrg.isPending}
             onClick={() => {
-              if (!window.confirm(`Delete "${org.name}"? This can't be undone from the portal.`)) return;
+              if (!window.confirm(`Delete "${org.name}"? This can't be undone from the console.`)) return;
               deleteOrg.mutate(undefined, {
                 onSuccess: () => {
                   toast.success("Organization deleted");

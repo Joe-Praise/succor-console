@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/features/auth/login-form";
+import { PRODUCT_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -14,7 +15,7 @@ export default function LoginPage() {
         >
           Welcome back
         </h1>
-        <p className="text-sm text-muted-foreground">Sign in to your portal.</p>
+        <p className="text-sm text-muted-foreground">Sign in to {PRODUCT_NAME}.</p>
       </div>
       <LoginForm />
     </div>

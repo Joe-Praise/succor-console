@@ -10,7 +10,7 @@ import { SectionHeading, CtaBand, Faq } from "@/components/marketing/section";
 export const metadata: Metadata = {
   title: `Pricing — ${BRAND_NAME}`,
   description:
-    "No seats. No platform fee. No credit packs. Pay the model's metered cost times a simple multiplier — and audit both numbers on every run.",
+    "No seats. No platform fee. No credit packs. Pay the provider's metered cost times a simple multiplier — and audit both numbers on every run.",
 };
 
 const INCLUDED = [
@@ -71,7 +71,7 @@ export default function PricingPage() {
           Pay for what runs. Audit every run.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          No seats. No platform fee. No credit packs. A run&apos;s price is the model&apos;s
+          No seats. No platform fee. No credit packs. A run&apos;s price is the provider&apos;s
           metered cost × a simple multiplier — and you always see both numbers.
         </p>
         <div className="mt-8">

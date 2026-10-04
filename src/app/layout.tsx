@@ -16,9 +16,10 @@ const newsreader = Newsreader({
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { BRAND_NAME, PRODUCT_NAME, BRAND_TAGLINE } from "@/lib/brand";
+import { BRAND_NAME, PRODUCT_NAME, BRAND_TAGLINE, SITE_URL } from "@/lib/brand";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: PRODUCT_NAME,
     template: `%s · ${BRAND_NAME}`,

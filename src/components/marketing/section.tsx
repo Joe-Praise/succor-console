@@ -59,11 +59,11 @@ export function CtaBand() {
             letterSpacing: "-0.01em",
           }}
         >
-          Ship AI features this week.
+          Ship the feature. Skip the machinery.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">
-          Create an organization, mint a key, and make your first agent call in under ten
-          minutes. Pay only for what runs.
+          Create an organization, mint a key, and make your first call in under ten minutes.
+          Pay only for what runs.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <Button size="lg" render={<Link href="/register" />}>

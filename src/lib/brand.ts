@@ -17,3 +17,6 @@ export const BRAND_TAGLINE = "The control plane for agents, workflows, and autom
 
 /** Public contact address shown on the marketing site. */
 export const BRAND_CONTACT_EMAIL = "hello@succor.com";
+
+/** Public site origin — canonical URLs, sitemap, OpenGraph. Override with NEXT_PUBLIC_SITE_URL. */
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://succor.com";

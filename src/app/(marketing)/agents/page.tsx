@@ -15,8 +15,8 @@ import { Reveal } from "@/components/marketing/reveal";
 import { SectionHeading, CtaBand } from "@/components/marketing/section";
 
 export const metadata: Metadata = {
-  title: `The agent catalog — ${BRAND_NAME}`,
-  description: `${MARKETING_CATALOG.length} production agents across SEO, content, analysis, e-learning, and vision. Operated, guarded, and metered by ${BRAND_NAME}.`,
+  title: `Agents — ${BRAND_NAME}`,
+  description: `Production agents you call through one API — operated, guarded, and metered by ${BRAND_NAME}. One integration covers every agent.`,
 };
 
 const ORDER: MarketingCategory[] = ["seo", "elearning", "analysis", "content", "vision"];
@@ -25,9 +25,7 @@ export default function AgentsPage() {
   return (
     <>
       <section className="mx-auto max-w-4xl px-6 pt-20 pb-6 text-center md:pt-28">
-        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">
-          {MARKETING_CATALOG.length} agents · five disciplines
-        </p>
+        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">The agent library</p>
         <h1
           className="mt-4 font-serif text-foreground"
           style={{
@@ -37,12 +35,12 @@ export default function AgentsPage() {
             letterSpacing: "-0.015em",
           }}
         >
-          The catalog.
+          One integration. Every agent.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          Every agent here is code we wrote, hardened, and operate — validated prompts,
-          schema-enforced output, injection guardrails, and a callback contract your app can
-          rely on. One integration covers all of them.
+          Each one is code we wrote, hardened, and operate — schema-enforced output, guardrails,
+          and a callback contract your app relies on. One integration covers every agent, and the
+          library keeps growing.
         </p>
       </section>
 
@@ -59,7 +57,10 @@ export default function AgentsPage() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {MARKETING_CATALOG.filter((a) => a.category === cat).map((a, i) => (
               <Reveal key={a.agentType} delay={i * 0.04}>
-                <div className="flex h-full flex-col rounded-xl border border-border bg-surface p-5">
+                <Link
+                  href={`/agents/${a.agentType}`}
+                  className="flex h-full flex-col rounded-xl border border-border bg-surface p-5 transition-colors hover:border-strong"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium text-foreground">{a.name}</h3>
                     <Badge variant="secondary" className="shrink-0 font-mono text-[10px]">
@@ -70,7 +71,7 @@ export default function AgentsPage() {
                   <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
                     {a.description}
                   </p>
-                </div>
+                </Link>
               </Reveal>
             ))}
           </div>
@@ -81,7 +82,7 @@ export default function AgentsPage() {
         <Reveal>
           <SectionHeading
             eyebrow="Something missing?"
-            title="Request the agent you actually need."
+            title="Request the capability you actually need."
             lede="We design, build, guard, and operate custom agents, then publish them to your private catalog — metered like everything else."
           />
           <div className="mt-6">

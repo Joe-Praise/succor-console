@@ -7,7 +7,7 @@ import {
   KeyRoundIcon,
   WebhookIcon,
   UsersIcon,
-  SparklesIcon,
+  PackagePlusIcon,
 } from "lucide-react";
 
 import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
@@ -25,15 +25,15 @@ export const metadata: Metadata = {
 const PROBLEMS = [
   {
     title: "The hidden backlog",
-    body: "The feature is 10% model, 90% machinery: prompt engineering, output validation, retries, guardrails, token accounting. None of it ships value on its own — all of it has to exist.",
+    body: "The feature is 10% idea, 90% machinery: integration, output validation, retries, guardrails, usage accounting. None of it ships value on its own — all of it has to exist.",
   },
   {
     title: "The runaway bill",
-    body: "One looping job or one busy tenant can burn a month's model budget overnight. You need hard caps and per-run receipts, not a dashboard you check after the damage.",
+    body: "One looping job or one busy tenant can burn a month's budget overnight. You need hard caps and per-run receipts, not a dashboard you check after the damage.",
   },
   {
     title: "The maintenance tax",
-    body: "Models change. Prompts drift. Output formats break at 2 a.m. Someone owns that forever — and it shouldn't be your product team.",
+    body: "Providers change. Outputs drift. Formats break at 2 a.m. Someone owns that forever — and it shouldn't be your product team.",
   },
 ];
 
@@ -62,7 +62,7 @@ const DIFFERENTIATORS = [
   {
     icon: ReceiptTextIcon,
     title: "Billing you can audit",
-    body: "Every run shows the model's raw cost and your billed price, side by side. The same numbers appear on your invoice.",
+    body: "Every run shows the raw provider cost and your billed price, side by side. The same numbers appear on your invoice.",
   },
   {
     icon: ShieldCheckIcon,
@@ -85,7 +85,7 @@ const DIFFERENTIATORS = [
     body: "Organizations with Owner, Admin, and Developer roles. Developers ship features; they can't leak a secret.",
   },
   {
-    icon: SparklesIcon,
+    icon: PackagePlusIcon,
     title: "Agents on request",
     body: "Need a capability we don't have? We design, build, guard, and operate it — then publish it to your private catalog.",
   },
@@ -93,20 +93,20 @@ const DIFFERENTIATORS = [
 
 const FAQ_ITEMS = [
   {
-    q: "What models run under the hood?",
-    a: "Current-generation frontier models, operated by us. You never manage a model, a prompt, or a provider account — the agent contract stays stable even as the models underneath improve.",
+    q: "Do we manage models or infrastructure?",
+    a: "No — you never touch a model, a provider account, a prompt, or a server. You call the agent; we operate everything behind it, and the contract stays stable even as what's under the hood improves.",
   },
   {
     q: "What happens when an agent fails mid-run?",
     a: "Failures are recorded with the error, and only tokens actually consumed are metered. Retried calls carrying the same requestId are deduplicated, so a retry never double-bills you.",
   },
   {
-    q: "Is my data used to train models?",
+    q: "Is my data used to train anything?",
     a: "No. Your payloads are used to fulfil your run — nothing else. Runs, outputs, and callbacks stay inside your project.",
   },
   {
     q: "How long does integration take?",
-    a: "One POST plus one callback endpoint — teams typically ship their first agent-powered feature in a day. The docs include copy-paste boilerplate for both sides.",
+    a: "One POST plus one callback endpoint — teams typically ship their first automation in a day. The docs include copy-paste boilerplate for both sides.",
   },
   {
     q: "How does billing work?",
@@ -138,11 +138,10 @@ export default function LandingPage() {
           Production agents for your product. Metered, billed, done.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          {BRAND_NAME} puts {MARKETING_CATALOG.length} curated, injection-guarded agents for
-          SEO, content, vision, and e-learning behind one API. Your app makes one call — we
-          run the model, validate the output, meter every token, and deliver the result to
-          your callback. You ship the feature. We run the machinery — agents today,
-          workflows, integrations, and automation next.
+          {BRAND_NAME} puts a growing library of production agents behind one API. Your app
+          makes one call — we run the work, validate the output, meter every token, and deliver
+          the result to your callback. You ship the feature; we run the machinery — agents
+          today, workflows, integrations, and automation next.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <Button size="lg" render={<Link href="/register" />}>
@@ -160,8 +159,7 @@ export default function LandingPage() {
 
         {/* Trust bar */}
         <p className="mt-10 text-sm text-faint">
-          Two verticals. One engine. Already powering a photography-SEO platform and an
-          e-learning platform in production.
+          One engine, already running in production behind live products.
         </p>
       </section>
 
@@ -171,7 +169,7 @@ export default function LandingPage() {
           <Reveal>
             <SectionHeading
               eyebrow="The gap"
-              title="Every roadmap says “AI features.” Every estimate says “next quarter.”"
+              title="Every roadmap has automation work no one wants to own."
             />
           </Reveal>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -222,8 +220,8 @@ export default function LandingPage() {
           <Reveal>
             <SectionHeading
               eyebrow="The catalog"
-              title={`${MARKETING_CATALOG.length} agents. Five disciplines. Zero prompts to write.`}
-              lede="Every agent is code we wrote, hardened, and operate: a validated prompt, schema-enforced output, prompt-injection guardrails, and a callback contract your app can rely on."
+              title="A growing library of production agents."
+              lede="Every agent is code we wrote, hardened, and operate: schema-enforced output, injection guardrails, and a callback contract your app can rely on. New agents land without you touching a thing."
             />
           </Reveal>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -349,7 +347,7 @@ export default function LandingPage() {
             <SectionHeading
               eyebrow="Managed agent development"
               title="The catalog is the start, not the ceiling."
-              lede="Tell us what you need the agent to do and what your callback should receive. We scope it with you, build and validate it, wrap it in the same guardrails as everything else, and ship it to your catalog — metered like any other agent. A bespoke AI capability, without the hire."
+              lede="Tell us what you need the agent to do and what your callback should receive. We scope it with you, build and validate it, wrap it in the same guardrails as everything else, and ship it to your catalog — metered like any other agent. A bespoke capability, without the hire."
             />
           </Reveal>
         </div>
