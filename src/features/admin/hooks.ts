@@ -158,6 +158,10 @@ export function usePatchAdminUser() {
   });
 }
 
+export function useResetAdminUserPassword() {
+  return useMutation({ mutationFn: adminApi.resetAdminUserPassword });
+}
+
 export function useAdminAgentRequests(status?: string) {
   return useQuery({
     queryKey: adminRequestsKey(status),

@@ -22,6 +22,10 @@ interface SecretRevealProps {
   label: string;
   /** Non-secret scheme prefix kept visible while masked (e.g. "ask_live_"). */
   prefix?: string;
+  /** Dialog title. Defaults to "Save your {label}". */
+  title?: string;
+  /** Dismiss-button text. Defaults to "I've stored this key". */
+  confirmLabel?: string;
 }
 
 /**
@@ -36,6 +40,8 @@ export function SecretReveal({
   secret,
   label,
   prefix,
+  title,
+  confirmLabel = "I've stored this key",
 }: SecretRevealProps) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -69,7 +75,7 @@ export function SecretReveal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Save your {label}</DialogTitle>
+          <DialogTitle>{title ?? `Save your ${label}`}</DialogTitle>
           <DialogDescription>
             This is the only time it will be shown. Store it somewhere safe —
             it can&apos;t be retrieved again.
@@ -106,7 +112,7 @@ export function SecretReveal({
           className="w-full"
           onClick={() => onOpenChange(false)}
         >
-          I&apos;ve stored this key
+          {confirmLabel}
         </Button>
       </DialogContent>
     </Dialog>

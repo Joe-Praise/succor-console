@@ -26,6 +26,7 @@ import {
   WebhookIcon,
   FlaskConicalIcon,
   PlusIcon,
+  UserCogIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -297,6 +298,7 @@ function ProjectPicker({ org, activeProjectId }: { org: OrgRef; activeProjectId:
 
 function UserMenu({ name, email }: { name: string; email: string }) {
   const logout = useLogout();
+  const router = useRouter();
   const initial = name.trim().charAt(0).toUpperCase() || "?";
   return (
     <DropdownMenu>
@@ -316,6 +318,11 @@ function UserMenu({ name, email }: { name: string; email: string }) {
             <span className="truncate font-normal text-muted-foreground">{email}</span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push("/account")}>
+          <UserCogIcon />
+          Account settings
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

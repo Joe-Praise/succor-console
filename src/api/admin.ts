@@ -163,6 +163,19 @@ export function patchAdminUser(
   return bff(`/api/bff/admin-api/users/${userId}`, { method: "PATCH", body: input });
 }
 
+/**
+ * Owner resets a user's password. With no body the service generates a strong
+ * one and returns it ONCE (show it, never store it); the user is signed out of
+ * every session immediately.
+ */
+export function resetAdminUserPassword(userId: string) {
+  return bff(`/api/bff/admin-api/users/${encodeURIComponent(userId)}/password`, {
+    method: "POST",
+    body: {},
+    schema: z.object({ user: AdminUserSchema, password: z.string().min(1) }),
+  });
+}
+
 // Agent requests
 export function listAdminAgentRequests(status?: string) {
   const qs = status ? `?status=${status}` : "";

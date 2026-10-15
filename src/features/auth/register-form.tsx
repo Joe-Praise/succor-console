@@ -12,11 +12,12 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ApiError } from "@/api/client";
 import { useRegister } from "@/features/auth/hooks";
+import { newPasswordSchema } from "@/lib/password-policy";
 
 const schema = z.object({
   name: z.string().min(1, "Enter your name"),
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "At least 8 characters"),
+  password: newPasswordSchema,
 });
 type Values = z.infer<typeof schema>;
 

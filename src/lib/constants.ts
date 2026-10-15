@@ -20,4 +20,5 @@ export const PROTECTED_PREFIXES = [
   "/invite",
   "/o",
   "/admin",
+  "/account",
 ] as const;

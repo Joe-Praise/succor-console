@@ -31,6 +31,20 @@ export function register(input: RegisterInput) {
   });
 }
 
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** The BFF swaps the session cookie for the fresh token; only the user comes back. */
+export function changePassword(input: ChangePasswordInput) {
+  return bff("/api/bff/auth/change-password", {
+    method: "POST",
+    body: input,
+    schema: AuthResultSchema,
+  });
+}
+
 export function logout() {
   return bff("/api/bff/auth/logout", { method: "POST" });
 }

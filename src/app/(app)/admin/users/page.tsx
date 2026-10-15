@@ -1,10 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UsersIcon, MoreHorizontalIcon } from "lucide-react";
 
-import { useAdminUsers, usePatchAdminUser } from "@/features/admin/hooks";
+import {
+  useAdminUsers,
+  usePatchAdminUser,
+  useResetAdminUserPassword,
+} from "@/features/admin/hooks";
+import { useMe } from "@/features/auth/hooks";
 import { PageHeader } from "@/components/page-header";
+import { SecretReveal } from "@/components/secret-reveal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -28,9 +36,27 @@ import { ApiError } from "@/api/client";
 export default function AdminUsersPage() {
   const users = useAdminUsers();
   const patch = usePatchAdminUser();
+  const resetPassword = useResetAdminUserPassword();
+  const me = useMe();
+  const router = useRouter();
+  // Generated password for ONE user, held only until the reveal is dismissed.
+  const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
 
   function onError(err: unknown) {
     toast.error(err instanceof ApiError ? err.message : "Action failed");
+  }
+
+  function confirmReset(u: { _id: string; name: string; email: string }) {
+    if (
+      !window.confirm(
+        `Reset the password for ${u.name} (${u.email})? Their current password stops working and they're signed out everywhere.`,
+      )
+    )
+      return;
+    resetPassword.mutate(u._id, {
+      onSuccess: (res) => setIssued({ email: u.email, password: res.password }),
+      onError,
+    });
   }
 
   return (
@@ -114,6 +140,20 @@ export default function AdminUsersPage() {
                         >
                           {u.role === "owner" ? "Demote to tenant" : "Promote to platform admin"}
                         </DropdownMenuItem>
+                        {u._id === me.data?.user.id ? (
+                          // Resetting your own would revoke this session — use the
+                          // current-password flow instead.
+                          <DropdownMenuItem onClick={() => router.push("/account")}>
+                            Change your password
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            disabled={resetPassword.isPending}
+                            onClick={() => confirmReset(u)}
+                          >
+                            Reset password
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -123,6 +163,19 @@ export default function AdminUsersPage() {
           </Table>
         </div>
       )}
+
+      {issued ? (
+        <SecretReveal
+          open={!!issued}
+          onOpenChange={(open) => {
+            if (!open) setIssued(null);
+          }}
+          secret={issued.password}
+          label="temporary password"
+          title={`New password for ${issued.email}`}
+          confirmLabel="I've shared it securely"
+        />
+      ) : null}
     </div>
   );
 }

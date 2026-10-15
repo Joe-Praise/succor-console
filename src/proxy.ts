@@ -50,6 +50,7 @@ export const config = {
     "/invite",
     "/o/:path*",
     "/admin/:path*",
+    "/account/:path*",
     "/login",
     "/register",
   ],

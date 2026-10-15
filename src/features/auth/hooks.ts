@@ -63,6 +63,15 @@ export function useRegister() {
   });
 }
 
+/** Change the signed-in user's password. Other sessions are revoked server-side. */
+export function useChangePassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.changePassword,
+    onSuccess: () => qc.invalidateQueries({ queryKey: meKey }),
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   const router = useRouter();
