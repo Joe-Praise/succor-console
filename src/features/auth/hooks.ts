@@ -72,6 +72,19 @@ export function useChangePassword() {
   });
 }
 
+export function useForgotPassword() {
+  return useMutation({ mutationFn: authApi.forgotPassword });
+}
+
+/** Redeem a reset link. Every session is revoked, so drop all cached user data. */
+export function useResetPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authApi.resetPassword,
+    onSuccess: () => qc.clear(),
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   const router = useRouter();

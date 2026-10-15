@@ -10,8 +10,10 @@ export const LAST_ORG_COOKIE = "ap_last_org";
 /** JWT lifetime mirrors agent-service (7 days). */
 export const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
 
-/** Routes reachable without a session. */
-export const AUTH_ROUTES = ["/login", "/register"] as const;
+/** Routes reachable without a session (signed-in visitors are bounced to the app).
+ *  /reset-password is deliberately NOT here: it's public but must stay reachable
+ *  while signed in — an emailed link can be opened in any browser. */
+export const AUTH_ROUTES = ["/login", "/register", "/forgot-password"] as const;
 
 /** App routes that require a session (cookie-presence gate in middleware). */
 export const PROTECTED_PREFIXES = [
