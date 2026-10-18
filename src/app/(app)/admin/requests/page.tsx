@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { toast } from "sonner";
 import { InboxIcon, ChevronDownIcon } from "lucide-react";
 
@@ -56,7 +57,9 @@ export default function AdminRequestsPage() {
             <div key={r._id ?? i} className="rounded-xl border border-border bg-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{r.title}</p>
+                  <Link href={`/admin/requests/${r._id}`} className="text-sm font-medium text-foreground hover:text-brand">
+                    {r.title}
+                  </Link>
                   <p className="font-mono text-xs text-muted-foreground">{r.projectId}</p>
                 </div>
                 <div className="flex items-center gap-2">

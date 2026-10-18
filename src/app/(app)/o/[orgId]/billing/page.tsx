@@ -9,14 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ops/data-table";
 
 export default function OrgBillingPage() {
   const { org, can } = useOrgCtx();
@@ -80,34 +73,24 @@ export default function OrgBillingPage() {
         {summary.isLoading ? (
           <Skeleton className="h-40 w-full rounded-xl" />
         ) : summary.data && summary.data.byProject.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Project</TableHead>
-                  <TableHead className="text-right">Runs</TableHead>
-                  <TableHead className="text-right">Provider cost</TableHead>
-                  <TableHead className="text-right">Billed</TableHead>
-                  <TableHead className="text-right">Budget cap</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {summary.data.byProject.map((p) => (
-                  <TableRow key={p.projectId}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-right tabular-nums">{p.runs}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {usd(p.costUsd)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{usd(p.billedUsd)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {p.monthlyBudgetUsd != null ? usd(p.monthlyBudgetUsd) : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            rows={summary.data.byProject}
+            getRowKey={(p) => p.projectId}
+            getRowHref={(p) => `/o/${org.orgId}/p/${p.projectId}/usage`}
+            getRowLabel={(p) => `Open usage for ${p.name}`}
+            columns={[
+              { id: "name", header: "Project", cell: (p) => <span className="font-medium text-foreground">{p.name}</span> },
+              { id: "runs", header: "Runs", align: "right", cell: (p) => p.runs.toLocaleString() },
+              { id: "cost", header: "Provider cost", align: "right", cell: (p) => <span className="text-muted-foreground">{usd(p.costUsd)}</span> },
+              { id: "billed", header: "Billed", align: "right", cell: (p) => usd(p.billedUsd) },
+              {
+                id: "cap",
+                header: "Budget cap",
+                align: "right",
+                cell: (p) => <span className="text-muted-foreground">{p.monthlyBudgetUsd != null ? usd(p.monthlyBudgetUsd) : "—"}</span>,
+              },
+            ]}
+          />
         ) : (
           <p className="text-sm text-muted-foreground">No usage recorded this month.</p>
         )}
@@ -120,6 +103,7 @@ export default function OrgBillingPage() {
         ) : invoices.data && invoices.data.invoices.length > 0 ? (
           <InvoiceTable
             invoices={invoices.data.invoices}
+            hrefFor={(inv) => `/o/${org.orgId}/p/${inv.projectId}/invoices/${inv.invoiceNumber}`}
             showProject
             canSubmitPayment={can("invoice.submitPayment")}
           />

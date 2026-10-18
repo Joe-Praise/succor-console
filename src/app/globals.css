@@ -35,11 +35,11 @@
   --radius-4xl: 999px; /* pills */
 
   /* Soft, warm elevation. */
-  --shadow-xs: 0 1px 2px rgba(50, 46, 40, 0.04);
-  --shadow-sm: 0 1px 2px rgba(50, 46, 40, 0.05), 0 1px 3px rgba(50, 46, 40, 0.04);
-  --shadow-md: 0 2px 6px rgba(50, 46, 40, 0.06), 0 4px 14px rgba(50, 46, 40, 0.05);
-  --shadow-lg: 0 8px 30px rgba(50, 46, 40, 0.12);
-  --shadow-xl: 0 16px 48px rgba(50, 46, 40, 0.16);
+  --shadow-xs: 0 1px 2px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k)));
+  --shadow-sm: 0 1px 2px rgb(var(--shadow-rgb) / calc(0.05 * var(--shadow-k))), 0 1px 3px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k)));
+  --shadow-md: 0 2px 6px rgb(var(--shadow-rgb) / calc(0.06 * var(--shadow-k))), 0 4px 14px rgb(var(--shadow-rgb) / calc(0.05 * var(--shadow-k)));
+  --shadow-lg: 0 8px 30px rgb(var(--shadow-rgb) / calc(0.12 * var(--shadow-k)));
+  --shadow-xl: 0 16px 48px rgb(var(--shadow-rgb) / calc(0.16 * var(--shadow-k)));
 
   /* --- shadcn semantic tokens (values below in :root / .dark) --- */
   --color-background: var(--background);
@@ -90,7 +90,7 @@
   --color-warning-bg: var(--warning-bg);
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
-  --color-info: var(--brand);
+  --color-info: var(--info);
   --color-info-bg: var(--info-bg);
   --color-chart-6: var(--chart-6);
   --color-chart-grid: var(--chart-grid);
@@ -101,6 +101,9 @@
    LIGHT theme (default) — warm paper
    --------------------------------------------------------------------------- */
 :root {
+  color-scheme: light;
+  --shadow-rgb: 50 46 40;
+  --shadow-k: 1;
   --background: #faf9f5; /* warm paper canvas */
   --surface: #ffffff;
   --raised: #f2f0e9;
@@ -129,14 +132,17 @@
   --success-bg: color-mix(in oklab, var(--success) 13%, transparent);
   --warning-bg: color-mix(in oklab, var(--warning) 15%, transparent);
   --error-bg: color-mix(in oklab, var(--error) 12%, transparent);
-  --info-bg: var(--brand-muted);
+  --info: #3f6b95; /* warm steel — live/running states, never confused with warning */
+  --info-bg: color-mix(in oklab, var(--info) 13%, transparent);
 
+  /* Categorical series (agents/models). Deliberately NOT the success/error hues, so a
+     series never reads as an outcome; outcome charts use --success/--error directly. */
   --chart-1: #c05f3c;
-  --chart-2: #4d7c46;
+  --chart-2: #5b7c9e;
   --chart-3: #c1912e;
-  --chart-4: #5b7c9e;
+  --chart-4: #9b5b8a;
   --chart-5: #4c9a8f;
-  --chart-6: #9b5b8a;
+  --chart-6: #7a8b3c;
   --chart-grid: #e4e1d6;
   --chart-axis: #97948a;
 
@@ -173,6 +179,9 @@
    DARK theme — warm charcoal
    --------------------------------------------------------------------------- */
 .dark {
+  color-scheme: dark;
+  --shadow-rgb: 0 0 0;
+  --shadow-k: 5;
   --background: #211f1c;
   --surface: #2a2825;
   --raised: #35322e;
@@ -199,14 +208,15 @@
   --success-bg: color-mix(in oklab, var(--success) 16%, transparent);
   --warning-bg: color-mix(in oklab, var(--warning) 16%, transparent);
   --error-bg: color-mix(in oklab, var(--error) 16%, transparent);
-  --info-bg: var(--brand-muted);
+  --info: #86a9d4;
+  --info-bg: color-mix(in oklab, var(--info) 17%, transparent);
 
   --chart-1: #d97757;
-  --chart-2: #7fb069;
+  --chart-2: #7f9cc4;
   --chart-3: #e0b84e;
-  --chart-4: #7f9cc4;
+  --chart-4: #c07ba8;
   --chart-5: #5fb5a8;
-  --chart-6: #c07ba8;
+  --chart-6: #a3b35c;
   --chart-grid: #403c35;
   --chart-axis: #837e73;
 

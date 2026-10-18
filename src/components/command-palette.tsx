@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
+import { useAppTheme } from "@/providers/theme-provider";
 import {
   LayoutDashboardIcon,
   PaletteIcon,
@@ -10,6 +10,7 @@ import {
   SunIcon,
     Building2Icon,
   SparklesIcon,
+  ActivityIcon,
 } from "lucide-react";
 
 import {
@@ -20,7 +21,6 @@ import {
   CommandGroup,
   CommandItem,
   CommandSeparator,
-  CommandShortcut,
 } from "@/components/ui/command";
 import { ADMIN_NAV, orgNav, parseScope, projectNavGroups, type NavItem } from "@/lib/nav";
 import { ORG_ROLE_RANK, type OrgRole } from "@/lib/permissions";
@@ -39,10 +39,11 @@ type Nav = { label: string; href: string; icon: typeof LayoutDashboardIcon; hint
  */
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const router = useRouter();
   const pathname = usePathname();
   const { data: me } = useMe();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme: resolvedTheme, forced: themeForced, setTheme } = useAppTheme();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -92,14 +93,37 @@ export function CommandPalette() {
 
   function go(item: Nav) {
     setOpen(false);
+    setSearch("");
     router.push(item.href);
   }
 
+  // Paste a job id from a 202 response (or a log line) to jump straight to the run.
+  const runId = /^[a-f0-9]{24}$/i.test(search.trim()) ? search.trim() : null;
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search or jump to…" />
+      <CommandInput
+        placeholder={projectId ? "Search, or paste a job ID…" : "Search or jump to…"}
+        value={search}
+        onValueChange={setSearch}
+      />
       <CommandList>
         <CommandEmpty>No results.</CommandEmpty>
+        {runId && orgId && projectId ? (
+          <CommandGroup heading="Run">
+            <CommandItem
+              forceMount
+              value={`open run ${runId}`}
+              onSelect={() =>
+                go({ label: "Open run", href: `/o/${orgId}/p/${projectId}/runs/${runId}`, icon: ActivityIcon, group: "Run" })
+              }
+            >
+              <ActivityIcon />
+              <span>Open run</span>
+              <span className="ml-auto font-mono text-xs text-faint">{runId}</span>
+            </CommandItem>
+          </CommandGroup>
+        ) : null}
         {groups.map((g) => (
           <CommandGroup key={g} heading={g}>
             {nav
@@ -116,18 +140,19 @@ export function CommandPalette() {
           </CommandGroup>
         ))}
         <CommandSeparator />
-        <CommandGroup heading="Actions">
-          <CommandItem
-            onSelect={() => {
-              setTheme(resolvedTheme === "dark" ? "light" : "dark");
-              setOpen(false);
-            }}
-          >
-            {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
-            Toggle theme
-            <CommandShortcut>⌘K</CommandShortcut>
-          </CommandItem>
-        </CommandGroup>
+        {themeForced ? null : (
+          <CommandGroup heading="Actions">
+            <CommandItem
+              onSelect={() => {
+                setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                setOpen(false);
+              }}
+            >
+              {resolvedTheme === "dark" ? <SunIcon /> : <MoonIcon />}
+              {resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            </CommandItem>
+          </CommandGroup>
+        )}
       </CommandList>
     </CommandDialog>
   );

@@ -10,6 +10,7 @@ import {
   InvoiceSchema,
   CatalogEntrySchema,
   AgentRequestSchema,
+  CallbackDeliverySchema,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -162,11 +163,12 @@ export function listLogs(projectId: string, limit = 50) {
   return bff(`/api/bff/projects/${projectId}/logs?limit=${limit}`, { schema: LogsSchema });
 }
 
-const DeliveriesSchema = z.object({ deliveries: z.array(z.record(z.string(), z.unknown())) });
+const DeliveriesSchema = z.object({ deliveries: z.array(CallbackDeliverySchema) });
 
-export function listCallbacks(projectId: string, limit = 50, ok?: boolean) {
+export function listCallbacks(projectId: string, limit = 50, ok?: boolean, agentType?: string) {
   const qs = new URLSearchParams({ limit: String(limit) });
   if (ok !== undefined) qs.set("ok", String(ok));
+  if (agentType) qs.set("agentType", agentType);
   return bff(`/api/bff/portal/projects/${projectId}/callbacks?${qs}`, {
     schema: DeliveriesSchema,
   });

@@ -71,7 +71,7 @@ const STATUS: Record<Status, Tone> = {
   approved: { label: "Approved", ...GOOD },
   suspended: { label: "Suspended", ...BAD },
   in_review: { label: "In review", ...INFO },
-  building: { label: "Building", text: "text-brand", bg: "bg-info-bg", dot: "bg-brand" },
+  building: { label: "Building", text: "text-brand", bg: "bg-brand-muted", dot: "bg-brand" },
   delivered: { label: "Delivered", ...GOOD },
   rejected: { label: "Rejected", ...BAD },
   active: { label: "Active", ...GOOD },

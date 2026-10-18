@@ -34,7 +34,7 @@ import type { OrgRole } from "@/lib/permissions";
  *
  * Project navigation is grouped by intent rather than listed flat:
  *   Build   — shape what the agents do (catalog, profile, workflows, try it, docs)
- *   Operate — watch and steer live work (jobs, approvals, run log, callbacks)
+ *   Operate — watch and steer live work (runs, approvals, usage log, callbacks)
  *   Govern  — what agents may touch and who did what (tools, audit, keys)
  *   Account — money, help, and configuration
  */
@@ -90,9 +90,9 @@ export function projectNavGroups(orgId: string, projectId: string): NavGroup[] {
       id: "operate",
       label: "Operate",
       items: [
-        { label: "Jobs", href: `${p}/jobs`, icon: ActivityIcon, hint: "Durable job status + results" },
+        { label: "Runs", href: `${p}/runs`, icon: ActivityIcon, hint: "Every execution — status, timeline, cost, delivery" },
         { label: "Approvals", href: `${p}/approvals`, icon: StampIcon, hint: "Held deliveries awaiting review" },
-        { label: "Logs", href: `${p}/logs`, icon: ScrollTextIcon, hint: "Metered run log" },
+        { label: "Logs", href: `${p}/logs`, icon: ScrollTextIcon, hint: "Every priced run record" },
         { label: "Callbacks", href: `${p}/callbacks`, icon: WebhookIcon, hint: "Deliveries to your API" },
       ],
     },

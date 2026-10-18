@@ -46,13 +46,16 @@ export function SecretReveal({
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Reset transient UI each time the modal opens.
-  useEffect(() => {
+  // Reset transient UI each time the modal opens — adjusted during render (the
+  // React "store previous prop" pattern) rather than in an effect.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setRevealed(false);
       setCopied(false);
     }
-  }, [open]);
+  }
 
   useEffect(() => {
     if (!copied) return;

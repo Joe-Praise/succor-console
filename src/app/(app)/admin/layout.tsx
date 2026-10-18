@@ -21,12 +21,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading || !data || !data.isPlatformAdmin) {
     return (
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="mx-auto max-w-[1400px] space-y-4">
         <Skeleton className="h-9 w-64" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
-  return <div className="mx-auto max-w-6xl">{children}</div>;
+  return <div className="mx-auto max-w-[1400px]">{children}</div>;
 }

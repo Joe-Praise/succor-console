@@ -59,7 +59,7 @@ export function OrgLayoutClient({
         </div>
       }
     >
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1400px]">
         <OrgStatusBanner />
         {children}
       </div>

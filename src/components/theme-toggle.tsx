@@ -1,25 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
 import { MoonIcon, SunIcon } from "lucide-react";
 
+import { useAppTheme } from "@/providers/theme-provider";
 import { Button } from "@/components/ui/button";
 
 /**
- * Light/dark toggle. Mounted-guard avoids a hydration mismatch since the
- * resolved theme is only known client-side (syncing external state — §11).
+ * Light/dark toggle for the app. Renders nothing on routes whose theme is forced
+ * (marketing is always light), and keeps SSR + first client render identical
+ * (theme is unknown until hydration) to avoid a mismatch.
  */
 export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, forced, setTheme } = useAppTheme();
+  if (forced) return null;
 
-  useEffect(() => setMounted(true), []);
-
-  // Theme is unknown until mounted — keep SSR and first client render
-  // identical (label AND icon) to avoid a hydration mismatch.
-  const isDark = mounted && resolvedTheme === "dark";
-
+  const isDark = theme === "dark";
   return (
     <Button
       variant="outline"

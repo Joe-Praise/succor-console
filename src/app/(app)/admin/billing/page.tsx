@@ -6,7 +6,6 @@ import { WalletIcon, Loader2Icon } from "lucide-react";
 
 import {
   useAdminInvoices,
-  usePatchInvoiceStatus,
   useGenerateAllInvoices,
   useBillingSettings,
   useUpdateBillingSettings,
@@ -20,14 +19,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge, type Status } from "@/components/ui/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ops/data-table";
+import { InvoiceAdminActions } from "@/features/admin/invoice-actions";
+import { dateTime } from "@/lib/format";
 import { ApiError } from "@/api/client";
 
 function currentMonthKey(): string {
@@ -37,11 +31,6 @@ function currentMonthKey(): string {
 
 function PaymentQueue() {
   const queue = useAdminInvoices("payment_submitted");
-  const patch = usePatchInvoiceStatus();
-
-  function onError(err: unknown) {
-    toast.error(err instanceof ApiError ? err.message : "Action failed");
-  }
 
   return (
     <section className="space-y-3">
@@ -55,84 +44,44 @@ function PaymentQueue() {
           description="When an org owner submits a bank reference, it lands here for confirmation."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Organization</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {queue.data.invoices.map((inv) => (
-                <TableRow key={inv.invoiceNumber}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-mono text-xs">{inv.invoiceNumber}</span>
-                      <span className="text-xs text-muted-foreground">{periodLabel(inv)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{inv.orgName ?? "—"}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{inv.projectId}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{usd(inv.totalBilledUsd)}</TableCell>
-                  <TableCell className="font-mono text-xs" title={inv.paymentNote ?? undefined}>
-                    {inv.paymentReference ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {inv.paymentSubmittedAt ? inv.paymentSubmittedAt.toLocaleDateString() : "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="sm"
-                        disabled={patch.isPending}
-                        onClick={() =>
-                          patch.mutate(
-                            {
-                              projectId: inv.projectId,
-                              invoiceNumber: inv.invoiceNumber,
-                              status: "paid",
-                            },
-                            { onSuccess: () => toast.success("Payment confirmed — invoice paid"), onError },
-                          )
-                        }
-                      >
-                        Confirm
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={patch.isPending}
-                        onClick={() => {
-                          const note = window.prompt("Rejection note for the org (optional):") ?? undefined;
-                          patch.mutate(
-                            {
-                              projectId: inv.projectId,
-                              invoiceNumber: inv.invoiceNumber,
-                              status: "issued",
-                              ...(note ? { note } : {}),
-                            },
-                            { onSuccess: () => toast.success("Submission rejected — back to issued"), onError },
-                          );
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          rows={queue.data.invoices}
+          getRowKey={(inv) => inv.invoiceNumber}
+          getRowHref={(inv) => `/admin/invoices/${inv.projectId}/${inv.invoiceNumber}`}
+          getRowLabel={(inv) => `Open invoice ${inv.invoiceNumber}`}
+          columns={[
+            {
+              id: "invoice",
+              header: "Invoice",
+              cell: (inv) => (
+                <div className="flex flex-col">
+                  <span className="font-mono text-xs text-foreground">{inv.invoiceNumber}</span>
+                  <span className="text-xs text-muted-foreground">{periodLabel(inv)}</span>
+                </div>
+              ),
+            },
+            {
+              id: "org",
+              header: "Organization",
+              cell: (inv) => (
+                <div className="flex flex-col">
+                  <span className="text-sm">{inv.orgName ?? "—"}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{inv.projectId}</span>
+                </div>
+              ),
+            },
+            { id: "amount", header: "Amount", align: "right", cell: (inv) => usd(inv.totalBilledUsd) },
+            { id: "ref", header: "Reference", cell: (inv) => <span className="font-mono text-xs" title={inv.paymentNote ?? undefined}>{inv.paymentReference ?? "—"}</span> },
+            { id: "submitted", header: "Submitted", cell: (inv) => <span className="text-muted-foreground">{dateTime(inv.paymentSubmittedAt)}</span> },
+            {
+              id: "actions",
+              header: "",
+              align: "right",
+              interactive: true,
+              cell: (inv) => <InvoiceAdminActions invoice={inv} compact />,
+            },
+          ]}
+        />
       )}
     </section>
   );
@@ -140,11 +89,6 @@ function PaymentQueue() {
 
 function AllInvoices() {
   const invoices = useAdminInvoices();
-  const patch = usePatchInvoiceStatus();
-
-  function onError(err: unknown) {
-    toast.error(err instanceof ApiError ? err.message : "Action failed");
-  }
 
   return (
     <section className="space-y-3">
@@ -154,53 +98,34 @@ function AllInvoices() {
       ) : !invoices.data || invoices.data.invoices.length === 0 ? (
         <p className="text-sm text-muted-foreground">No invoices yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Org / project</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.data.invoices.map((inv) => (
-                <TableRow key={inv.invoiceNumber}>
-                  <TableCell className="font-mono text-xs">{inv.invoiceNumber}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{inv.orgName ?? "—"}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{inv.projectId}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{usd(inv.totalBilledUsd)}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={inv.status as Status} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {inv.status === "draft" ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={patch.isPending}
-                        onClick={() =>
-                          patch.mutate(
-                            { projectId: inv.projectId, invoiceNumber: inv.invoiceNumber, status: "issued" },
-                            { onSuccess: () => toast.success("Invoice issued"), onError },
-                          )
-                        }
-                      >
-                        Issue
-                      </Button>
-                    ) : null}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          rows={invoices.data.invoices}
+          getRowKey={(inv) => inv.invoiceNumber}
+          getRowHref={(inv) => `/admin/invoices/${inv.projectId}/${inv.invoiceNumber}`}
+          getRowLabel={(inv) => `Open invoice ${inv.invoiceNumber}`}
+          columns={[
+            { id: "invoice", header: "Invoice", cell: (inv) => <span className="font-mono text-xs text-foreground">{inv.invoiceNumber}</span> },
+            {
+              id: "org",
+              header: "Org / project",
+              cell: (inv) => (
+                <div className="flex flex-col">
+                  <span className="text-sm">{inv.orgName ?? "—"}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{inv.projectId}</span>
+                </div>
+              ),
+            },
+            { id: "amount", header: "Amount", align: "right", cell: (inv) => usd(inv.totalBilledUsd) },
+            { id: "status", header: "Status", cell: (inv) => <StatusBadge status={inv.status as Status} /> },
+            {
+              id: "actions",
+              header: "",
+              align: "right",
+              interactive: true,
+              cell: (inv) => <InvoiceAdminActions invoice={inv} compact />,
+            },
+          ]}
+        />
       )}
     </section>
   );

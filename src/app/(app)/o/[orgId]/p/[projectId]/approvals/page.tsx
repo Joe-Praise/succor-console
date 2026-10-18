@@ -322,7 +322,7 @@ export default function ApprovalsPage() {
           title="Nothing waiting on you"
           description="When a gated agent finishes, its held delivery shows up here for review."
           action={
-            <Button variant="outline" size="sm" render={<Link href={`${base}/jobs`} />}>
+            <Button variant="outline" size="sm" render={<Link href={`${base}/runs`} />}>
               See recent jobs
               <ArrowRightIcon />
             </Button>
@@ -336,7 +336,7 @@ export default function ApprovalsPage() {
               approval={a}
               canDecide={canDecide}
               agentName={catalog.data?.catalog.find((e) => e.agentType === a.agentType)?.name ?? a.agentType}
-              jobHref={`${base}/jobs/${a.jobId}`}
+              jobHref={`${base}/runs/${a.jobId}`}
             />
           ))}
         </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Building2Icon } from "lucide-react";
@@ -13,14 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge, type Status } from "@/components/ui/status-badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ops/data-table";
 import { ApiError } from "@/api/client";
 
 const FILTERS = ["all", "pending", "approved", "suspended"] as const;
@@ -66,68 +58,56 @@ function OrgsInner() {
           description="Organizations appear here as companies sign up."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organization</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Projects</TableHead>
-                <TableHead className="text-right">Members</TableHead>
-                <TableHead>Billing email</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orgs.data.orgs.map((o) => (
-                <TableRow key={o.orgId}>
-                  <TableCell>
-                    <Link href={`/admin/orgs/${o.orgId}`} className="flex flex-col hover:underline">
-                      <span className="font-medium text-foreground">{o.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{o.orgId}</span>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={o.status as Status} />
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{o.projectCount}</TableCell>
-                  <TableCell className="text-right tabular-nums">{o.memberCount}</TableCell>
-                  <TableCell className="text-muted-foreground">{o.billingEmail}</TableCell>
-                  <TableCell className="text-right">
-                    {o.status !== "approved" ? (
-                      <Button
-                        size="sm"
-                        disabled={approve.isPending}
-                        onClick={() =>
-                          approve.mutate(o.orgId, {
-                            onSuccess: () => toast.success(`${o.name} approved`),
-                            onError,
-                          })
-                        }
-                      >
-                        Approve
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={suspend.isPending}
-                        onClick={() =>
-                          suspend.mutate(o.orgId, {
-                            onSuccess: () => toast.success(`${o.name} suspended`),
-                            onError,
-                          })
-                        }
-                      >
-                        Suspend
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          rows={orgs.data.orgs}
+          getRowKey={(o) => o.orgId}
+          getRowHref={(o) => `/admin/orgs/${o.orgId}`}
+          getRowLabel={(o) => `Open organization ${o.name}`}
+          columns={[
+            {
+              id: "org",
+              header: "Organization",
+              cell: (o) => (
+                <div className="flex flex-col">
+                  <span className="font-medium text-foreground">{o.name}</span>
+                  <span className="font-mono text-[11px] text-faint">{o.orgId}</span>
+                </div>
+              ),
+            },
+            { id: "status", header: "Status", cell: (o) => <StatusBadge status={o.status as Status} /> },
+            { id: "projects", header: "Projects", align: "right", cell: (o) => o.projectCount },
+            { id: "members", header: "Members", align: "right", cell: (o) => o.memberCount },
+            { id: "email", header: "Billing email", cell: (o) => <span className="text-muted-foreground">{o.billingEmail}</span> },
+            {
+              id: "actions",
+              header: "",
+              align: "right",
+              interactive: true,
+              cell: (o) =>
+                o.status !== "approved" ? (
+                  <Button
+                    size="xs"
+                    disabled={approve.isPending}
+                    onClick={() => approve.mutate(o.orgId, { onSuccess: () => toast.success(`${o.name} approved`), onError })}
+                  >
+                    Approve
+                  </Button>
+                ) : (
+                  <Button
+                    variant="destructive"
+                    size="xs"
+                    disabled={suspend.isPending}
+                    onClick={() => {
+                      if (!window.confirm(`Suspend ${o.name}? Every project in it stops running agents.`)) return;
+                      suspend.mutate(o.orgId, { onSuccess: () => toast.success(`${o.name} suspended`), onError });
+                    }}
+                  >
+                    Suspend
+                  </Button>
+                ),
+            },
+          ]}
+        />
       )}
     </div>
   );

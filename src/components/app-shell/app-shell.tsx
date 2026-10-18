@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   CommandPalette,
   OPEN_COMMAND_PALETTE,
@@ -388,7 +389,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-5 py-6 md:px-8">{children}</main>
+        <main className="flex-1 overflow-y-auto px-5 py-6 md:px-8">
+          <TooltipProvider delay={200}>{children}</TooltipProvider>
+        </main>
       </div>
 
       <CommandPalette />

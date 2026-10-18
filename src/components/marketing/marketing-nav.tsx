@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
   { label: "Platform", href: "/platform" },
@@ -54,7 +53,6 @@ export function MarketingNav() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" render={<Link href="/login" />}>
             Sign in
           </Button>

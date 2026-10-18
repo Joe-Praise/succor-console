@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ProjectInvoicesPage() {
-  const { projectId, project } = useProjectScope();
+  const { orgId, projectId, project } = useProjectScope();
   const { can } = useOrgCtx();
   const invoices = useInvoices(projectId);
 
@@ -27,6 +27,7 @@ export default function ProjectInvoicesPage() {
       ) : invoices.data && invoices.data.length > 0 ? (
         <InvoiceTable
           invoices={invoices.data}
+          hrefFor={(inv) => `/o/${orgId}/p/${projectId}/invoices/${inv.invoiceNumber}`}
           canSubmitPayment={can("invoice.submitPayment")}
         />
       ) : (

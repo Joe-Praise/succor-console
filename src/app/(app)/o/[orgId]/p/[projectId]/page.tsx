@@ -118,7 +118,7 @@ function RecentRuns({ orgId, projectId }: { orgId: string; projectId: string }) 
                   <div className="min-w-0">
                     {log.jobId ? (
                       <Link
-                        href={`/o/${orgId}/p/${projectId}/jobs/${log.jobId}`}
+                        href={`/o/${orgId}/p/${projectId}/runs/${log.jobId}`}
                         className="block truncate font-mono text-xs text-foreground hover:text-brand"
                       >
                         {log.agentType ?? "—"}

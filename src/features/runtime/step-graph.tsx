@@ -4,31 +4,37 @@ import Link from "next/link";
 import { GitForkIcon, ScaleIcon, ArrowDownIcon, CircleDotIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useJob } from "@/features/runtime/hooks";
+import { dotClass, LIVE_JOB_STATUSES } from "@/lib/status";
+import { shortId } from "@/lib/format";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
 import type { WorkflowStep } from "@/types";
 
-const DOT: Record<string, string> = {
-  queued: "bg-muted-foreground",
-  running: "bg-info animate-pulse",
-  succeeded: "bg-success",
-  dead: "bg-error",
-  pending_approval: "bg-warning",
-  rejected: "bg-error",
-};
-
-/** A job id as a live chip — colors itself from the job's own status. */
-export function JobChip({ jobId, href, label }: { jobId: string; href: string; label?: string }) {
-  const job = useJob(jobId);
-  const status = job.data?.job.status;
+/**
+ * A job id as a status chip. The status comes from ONE runs-list query for the whole
+ * workflow (passed in), not a poller per chip — a fan-out step can have dozens.
+ */
+export function JobChip({
+  jobId,
+  href,
+  label,
+  status,
+}: {
+  jobId: string;
+  href: string;
+  label?: string;
+  status?: string;
+}) {
   return (
     <Link
       href={href}
       title={status ? `${jobId} — ${status.replace("_", " ")}` : jobId}
       className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 font-mono text-[11px] text-muted-foreground transition-colors hover:border-strong hover:text-foreground"
     >
-      <span className={cn("size-1.5 rounded-full", status ? DOT[status] ?? "bg-faint" : "bg-faint")} aria-hidden />
-      {label ?? `…${jobId.slice(-6)}`}
+      <span
+        className={cn("size-1.5 rounded-full", status ? dotClass(status) : "bg-faint", status && LIVE_JOB_STATUSES.has(status) && "animate-pulse")}
+        aria-hidden
+      />
+      {label ?? shortId(jobId)}
     </Link>
   );
 }
@@ -48,10 +54,12 @@ export function StepGraph({
   steps,
   currentStep,
   jobHref,
+  statusOf,
 }: {
   steps: WorkflowStep[];
   currentStep: number;
   jobHref: (jobId: string) => string;
+  statusOf?: (jobId: string) => string | undefined;
 }) {
   return (
     <ol className="space-y-0">
@@ -91,13 +99,18 @@ export function StepGraph({
               {step.jobIds.length > 0 || step.criticJobId ? (
                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
                   {step.jobIds.slice(0, 24).map((id) => (
-                    <JobChip key={id} jobId={id} href={jobHref(id)} />
+                    <JobChip key={id} jobId={id} href={jobHref(id)} status={statusOf?.(id)} />
                   ))}
                   {step.jobIds.length > 24 ? (
                     <span className="text-xs text-faint">+{step.jobIds.length - 24} more</span>
                   ) : null}
                   {step.criticJobId ? (
-                    <JobChip jobId={step.criticJobId} href={jobHref(step.criticJobId)} label="critic" />
+                    <JobChip
+                      jobId={step.criticJobId}
+                      href={jobHref(step.criticJobId)}
+                      label="critic"
+                      status={statusOf?.(step.criticJobId)}
+                    />
                   ) : null}
                 </div>
               ) : null}
