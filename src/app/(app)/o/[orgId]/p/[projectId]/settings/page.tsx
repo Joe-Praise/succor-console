@@ -8,6 +8,9 @@ import { Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useUpdateProject } from "@/features/projects/hooks";
+import { useOrgProjects } from "@/features/orgs/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
+import { QueryError } from "@/components/query-error";
 import { RoleGate } from "@/features/orgs/org-context";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -29,8 +32,8 @@ const SettingsSchema = z.object({
 });
 type SettingsValues = z.infer<typeof SettingsSchema>;
 
-function SettingsForm() {
-  const { orgId, projectId, project } = useProjectScope();
+function SettingsForm({ initial }: { initial: SettingsValues }) {
+  const { orgId, projectId } = useProjectScope();
   const update = useUpdateProject(orgId, projectId);
   const {
     register,
@@ -39,10 +42,7 @@ function SettingsForm() {
     formState: { errors, isDirty },
   } = useForm<SettingsValues>({
     resolver: zodResolver(SettingsSchema),
-    defaultValues: {
-      name: project?.name ?? projectId,
-      apiBaseUrls: [{ label: "production", url: "" }],
-    },
+    defaultValues: initial,
   });
   const urls = useFieldArray({ control, name: "apiBaseUrls" });
 
@@ -52,7 +52,10 @@ function SettingsForm() {
         <CardTitle>General</CardTitle>
         <CardDescription>
           The project ID (<span className="font-mono">{projectId}</span>) is permanent.
-          Base URLs are where agents deliver callbacks.
+          Base URLs are where agents deliver callbacks — each is SSRF-checked when saved and again on
+          every delivery. A request&apos;s <span className="font-mono">environment</span> field picks
+          the matching label, falling back to <span className="font-mono">production</span>, then the
+          first entry.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -125,6 +128,24 @@ function SettingsForm() {
   );
 }
 
+/** Loads the CURRENT name + base URLs so saving never silently wipes them. */
+function SettingsLoader() {
+  const { orgId, projectId, project } = useProjectScope();
+  const projects = useOrgProjects(orgId);
+  if (projects.isLoading) return <Skeleton className="h-72 w-full rounded-xl" />;
+  if (projects.isError) {
+    return <QueryError message="Couldn't load this project's settings." onRetry={() => void projects.refetch()} />;
+  }
+  const current = projects.data?.projects.find((p) => p.projectId === projectId);
+  const urls = current?.apiBaseUrls?.length ? current.apiBaseUrls : [{ label: "production", url: "" }];
+  return (
+    <SettingsForm
+      key={JSON.stringify(urls)}
+      initial={{ name: current?.name ?? project?.name ?? projectId, apiBaseUrls: urls }}
+    />
+  );
+}
+
 export default function ProjectSettingsPage() {
   return (
     <div className="space-y-8">
@@ -137,7 +158,7 @@ export default function ProjectSettingsPage() {
           </p>
         }
       >
-        <SettingsForm />
+        <SettingsLoader />
       </RoleGate>
     </div>
   );

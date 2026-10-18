@@ -12,6 +12,7 @@ export const adminInvoicesKey = (status?: string) => ["admin", "invoices", statu
 export const adminUsersKey = ["admin", "users"] as const;
 export const adminRequestsKey = (status?: string) => ["admin", "requests", status ?? "all"] as const;
 export const adminLogsKey = ["admin", "logs"] as const;
+export const adminTicketsKey = (status?: string) => ["admin", "tickets", status ?? "all"] as const;
 export const revenueKey = ["admin", "revenue"] as const;
 export const billingSettingsKey = ["admin", "billing-settings"] as const;
 
@@ -175,6 +176,22 @@ export function usePatchAdminAgentRequest() {
     mutationFn: ({ id, ...input }: { id: string; status: string; adminNotes?: string | null }) =>
       adminApi.patchAdminAgentRequest(id, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "requests"] }),
+  });
+}
+
+export function useAdminTickets(status?: string) {
+  return useQuery({
+    queryKey: adminTicketsKey(status),
+    queryFn: () => adminApi.listAdminTickets(status),
+  });
+}
+
+export function usePatchAdminTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: string } & Parameters<typeof adminApi.patchAdminTicket>[1]) =>
+      adminApi.patchAdminTicket(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "tickets"] }),
   });
 }
 

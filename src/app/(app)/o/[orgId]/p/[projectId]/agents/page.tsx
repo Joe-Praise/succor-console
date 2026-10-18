@@ -12,6 +12,8 @@ import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useCatalog, useAgentRequests, useCreateAgentRequest } from "@/features/projects/hooks";
 import { RoleGate } from "@/features/orgs/org-context";
 import { RequestTimeline } from "@/features/agents/request-timeline";
+import { CapabilityBadges, POLICY_META } from "@/features/agents/capability-badges";
+import { AGENT_TRAITS, TRAIT_META } from "@/data/agent-traits";
 import { parseEndpoint } from "@/lib/catalog";
 import type { CatalogEntry } from "@/types";
 import { PageHeader } from "@/components/page-header";
@@ -128,12 +130,22 @@ function RequestAgentDialog({
 function AgentDetailSheet({
   entry,
   docsHref,
+  playgroundHref,
   onOpenChange,
 }: {
   entry: CatalogEntry | null;
   docsHref: string;
+  playgroundHref: string;
   onOpenChange: (o: boolean) => void;
 }) {
+  const policies = entry
+    ? ([
+        entry.riskTier === "high" ? "approval" : null,
+        entry.dataClass === "protected" ? "protected" : null,
+        entry.toolsEnabled ? "tools" : null,
+      ].filter(Boolean) as Array<keyof typeof POLICY_META>)
+    : [];
+  const traits = entry ? AGENT_TRAITS[entry.agentType] ?? [] : [];
   return (
     <Sheet open={!!entry} onOpenChange={(o) => !o && onOpenChange(false)}>
       <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-md">
@@ -153,6 +165,45 @@ function AgentDetailSheet({
             <div className="space-y-5 p-4 pt-0">
               <p className="text-sm text-muted-foreground">{entry.description}</p>
               <div className="space-y-2">
+                <p className="text-xs font-medium text-faint">How it runs</p>
+                <dl className="divide-y divide-border rounded-lg border border-border bg-surface text-sm">
+                  <div className="flex justify-between gap-3 px-3 py-2">
+                    <dt className="text-muted-foreground">Model</dt>
+                    <dd className="font-mono text-xs text-foreground">{entry.model ?? "platform default"}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3 px-3 py-2">
+                    <dt className="text-muted-foreground">Output budget</dt>
+                    <dd className="tabular-nums text-foreground">
+                      {(entry.maxTokens ?? entry.typicalMaxTokens).toLocaleString()} tokens
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3 px-3 py-2">
+                    <dt className="text-muted-foreground">Delivers</dt>
+                    <dd className="font-mono text-xs text-foreground">
+                      {entry.callbackMethod} {entry.callbackPath}
+                    </dd>
+                  </div>
+                  {policies.map((p) => {
+                    const { icon: Icon, label, hint } = POLICY_META[p];
+                    return (
+                      <div key={p} className="flex items-start gap-2 px-3 py-2">
+                        <Icon className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />
+                        <div>
+                          <dt className="font-medium text-foreground">{label}</dt>
+                          <dd className="text-xs text-muted-foreground">{hint}</dd>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {traits.map((t) => (
+                    <div key={t} className="px-3 py-2">
+                      <dt className="font-medium text-foreground">{TRAIT_META[t].label}</dt>
+                      <dd className="text-xs text-muted-foreground">{TRAIT_META[t].hint}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="space-y-2">
                 <p className="text-xs font-medium text-faint">Request</p>
                 <CodeBlock
                   label={`${parseEndpoint(entry.endpoint).method} ${parseEndpoint(entry.endpoint).path}`}
@@ -166,12 +217,18 @@ function AgentDetailSheet({
                   code={pretty(entry.callbackExample)}
                 />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                render={<Link href={docsHref}>Open full integration guide</Link>}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={<Link href={docsHref}>Integration guide</Link>}
+                />
+                <Button
+                  size="sm"
+                  disabled={!entry.enabledForProject}
+                  render={<Link href={playgroundHref}>Try in playground</Link>}
+                />
+              </div>
             </div>
           </>
         ) : null}
@@ -195,7 +252,7 @@ export default function AgentsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Agents"
-        description="The curated catalog — enabled agents run on this project today."
+        description="Production agents, each with a typed request, a validated output and a callback contract. Enabled agents run on this project today."
         action={
           <RoleGate min="admin">
             <Button size="sm" onClick={() => setRequestOpen(true)}>
@@ -253,8 +310,9 @@ export default function AgentsPage() {
                 </div>
                 <CardDescription className="font-mono text-xs">{e.agentType}</CardDescription>
               </CardHeader>
-              <CardContent className="flex-1">
+              <CardContent className="flex flex-1 flex-col justify-between gap-3">
                 <p className="line-clamp-3 text-sm text-muted-foreground">{e.description}</p>
+                <CapabilityBadges entry={e} />
               </CardContent>
             </Card>
           ))}
@@ -300,6 +358,7 @@ export default function AgentsPage() {
       <AgentDetailSheet
         entry={selected}
         docsHref={`/o/${orgId}/p/${projectId}/docs`}
+        playgroundHref={`/o/${orgId}/p/${projectId}/playground?agent=${selected?.agentType ?? ""}`}
         onOpenChange={(o) => !o && setSelected(null)}
       />
     </div>

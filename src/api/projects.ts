@@ -164,8 +164,10 @@ export function listLogs(projectId: string, limit = 50) {
 
 const DeliveriesSchema = z.object({ deliveries: z.array(z.record(z.string(), z.unknown())) });
 
-export function listCallbacks(projectId: string, limit = 50) {
-  return bff(`/api/bff/portal/projects/${projectId}/callbacks?limit=${limit}`, {
+export function listCallbacks(projectId: string, limit = 50, ok?: boolean) {
+  const qs = new URLSearchParams({ limit: String(limit) });
+  if (ok !== undefined) qs.set("ok", String(ok));
+  return bff(`/api/bff/portal/projects/${projectId}/callbacks?${qs}`, {
     schema: DeliveriesSchema,
   });
 }

@@ -8,6 +8,13 @@ import {
   WebhookIcon,
   UsersIcon,
   PackagePlusIcon,
+  ActivityIcon,
+  StampIcon,
+  FingerprintIcon,
+  WorkflowIcon,
+  PlugZapIcon,
+  LibraryIcon,
+  IdCardIcon,
 } from "lucide-react";
 
 import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
@@ -47,18 +54,28 @@ const STEPS = [
   {
     n: "02",
     title: "Call an agent",
-    body: "POST /agents/<type> with your payload and an idempotency requestId. We answer 202 in milliseconds and get to work.",
-    code: `curl -X POST $SERVICE/agents/quiz-generator \\\n  -H "Authorization: Bearer $KEY" \\\n  -d '{ "projectId": "my-app", "requestId": "run-19" }'\n\n→ 202 Accepted`,
+    body: "POST /agents/<type> with your payload and an idempotency requestId. We answer 202 with a job id in milliseconds — from there it's a durable job.",
+    code: `curl -X POST $SERVICE/agents/quiz-generator \\\n  -H "Authorization: Bearer $KEY" \\\n  -d '{ "projectId": "my-app", "requestId": "run-19", … }'\n\n→ 202 { "jobId": "6710f3c2…" }`,
   },
   {
     n: "03",
     title: "Receive the result",
-    body: "The agent delivers validated output to your callback endpoint, signed with your key. Your app never polls.",
-    code: `PUT /api/agent-callback\nX-Succor-Callback-Key: cbk_••••••••\n\n{ "quiz": [ … ], "agent_initiated": true }`,
+    body: "Validated output is delivered to your endpoint, signed with your key and retried if you're down. Prefer pull? Poll the job.",
+    code: `PUT /api/v1/admin/courses/123/quiz\nX-Succor-Callback-Key: cbk_••••••••\nX-Delivery-Id: 6710f3c2…:callback:main\n\n{ "questions": [ … ], "agent_initiated": true }`,
   },
 ];
 
 const DIFFERENTIATORS = [
+  {
+    icon: ActivityIcon,
+    title: "Durable by default",
+    body: "Every call is a leased, checkpointed job. A crash mid-run resumes from the last step — it doesn't start over, and it doesn't bill twice.",
+  },
+  {
+    icon: StampIcon,
+    title: "A human where it matters",
+    body: "High-risk agents hold their output for review. Edit it, approve it, or reject it with a note the next run will follow.",
+  },
   {
     icon: ReceiptTextIcon,
     title: "Billing you can audit",
@@ -76,8 +93,13 @@ const DIFFERENTIATORS = [
   },
   {
     icon: WebhookIcon,
-    title: "A callback, not a queue to babysit",
-    body: "Fire-and-forget 202; signed results arrive at your endpoint. Retried calls never double-bill, thanks to idempotency keys.",
+    title: "Delivery you can trust",
+    body: "Signed callbacks with a stable delivery id, retried on 5xx and timeouts. A retried request never runs twice, thanks to idempotency keys.",
+  },
+  {
+    icon: FingerprintIcon,
+    title: "A signed audit trail",
+    body: "Every approval, rejection and privileged action lands in an append-only, HMAC-signed ledger your team can read.",
   },
   {
     icon: UsersIcon,
@@ -91,6 +113,14 @@ const DIFFERENTIATORS = [
   },
 ];
 
+/** The engine, in four lines — the full story lives on /platform. */
+const ENGINE = [
+  { icon: WorkflowIcon, title: "Workflows", body: "Chain agents into durable graphs with fan-out and quality gates.", href: "/platform#workflows" },
+  { icon: PlugZapIcon, title: "Tools over MCP", body: "Grant one read-only tool to one agent. Nothing more reaches the model.", href: "/platform#tools" },
+  { icon: LibraryIcon, title: "Grounding & memory", body: "Agents read what you've published, skip duplicates, and learn your style.", href: "/platform#grounding" },
+  { icon: IdCardIcon, title: "Business profile", body: "Describe your business once; every prompt reads it as fenced data.", href: "/platform#profile" },
+];
+
 const FAQ_ITEMS = [
   {
     q: "Do we manage models or infrastructure?",
@@ -98,7 +128,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens when an agent fails mid-run?",
-    a: "Failures are recorded with the error, and only tokens actually consumed are metered. Retried calls carrying the same requestId are deduplicated, so a retry never double-bills you.",
+    a: "Each call is a durable job: leased by a worker, checkpointed per model step, and metered once at a fenced finish. If the process dies, another worker reclaims the job and replays finished steps instead of paying for them again. A job that exhausts its retries is dead-lettered with the reason, visible on its job page. Retried calls carrying the same requestId are deduplicated.",
+  },
+  {
+    q: "Can a person review output before it reaches our app?",
+    a: "Yes. High-risk agents hold their delivery until a project admin approves it in the console — with optional edits. A rejection note is kept as a style rule, so the next generation avoids the same mistake.",
+  },
+  {
+    q: "Can agents use our own data?",
+    a: "Three ways. Writer agents retrieve your already-published content as reference and skip near-duplicates. A business profile tells every agent who you are. And tool-ready agents can call read-only tools on your own MCP servers — one explicitly granted tool at a time.",
   },
   {
     q: "Is my data used to train anything?",
@@ -138,10 +176,11 @@ export default function LandingPage() {
           Production agents for your product. Metered, billed, done.
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          {BRAND_NAME} puts a growing library of production agents behind one API. Your app
-          makes one call — we run the work, validate the output, meter every token, and deliver
-          the result to your callback. You ship the feature; we run the machinery — agents
-          today, workflows, integrations, and automation next.
+          {BRAND_NAME} puts a growing library of production agents behind one API. Your app makes
+          one call — it becomes a durable job that we run, validate, meter once, hold for human
+          review when the stakes are high, and deliver to your callback. Chain agents into
+          workflows, ground them in your content, and give them read-only tools. You ship the
+          feature; we run the machinery.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <Button size="lg" render={<Link href="/register" />}>
@@ -272,8 +311,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Billing transparency ─────────────────────────────────────────── */}
+      {/* ── The engine ───────────────────────────────────────────────────── */}
       <section className="border-t border-border bg-surface">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <Reveal>
+            <SectionHeading
+              eyebrow="Beyond a single call"
+              title="Agents are the surface. The engine is the product."
+              lede="The same durable runtime that runs one agent call also runs pipelines, tool access and grounding — with the same metering, approvals and audit trail."
+            />
+          </Reveal>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {ENGINE.map((e, i) => (
+              <Reveal key={e.title} delay={i * 0.05}>
+                <Link
+                  href={e.href}
+                  className="group block h-full rounded-xl border border-border bg-background p-5 transition-colors hover:border-strong"
+                >
+                  <e.icon className="size-5 text-brand" aria-hidden />
+                  <h3 className="mt-3 flex items-center gap-1.5 font-medium text-foreground">
+                    {e.title}
+                    <ArrowRightIcon className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{e.body}</p>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mt-10 text-center">
+            <Button variant="outline" render={<Link href="/platform" />}>
+              See everything the platform does
+              <ArrowRightIcon />
+            </Button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Billing transparency ─────────────────────────────────────────── */}
+      <section className="border-t border-border">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-2">
           <Reveal>
             <SectionHeading
@@ -290,7 +365,7 @@ export default function LandingPage() {
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <div className="overflow-x-auto rounded-xl border border-border bg-background p-4 font-mono text-xs">
+            <div className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs">
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-faint">
@@ -330,18 +405,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── Teams ────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <Reveal>
-          <SectionHeading
-            eyebrow="For teams"
-            title="Built for organizations, not just accounts."
-            lede="Create an organization, invite your team, and keep roles honest: Owners handle billing and membership, Admins run projects and keys, Developers build without ever touching a secret. Every project gets its own keys, its own budget cap, and its own invoice — pay for exactly the project you choose, when you choose."
-          />
-        </Reveal>
+      <section className="border-t border-border bg-surface">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <Reveal>
+            <SectionHeading
+              eyebrow="For teams"
+              title="Built for organizations, not just accounts."
+              lede="Create an organization, invite your team, and keep roles honest: Owners handle billing and membership, Admins run projects, keys, tools and approvals, Developers build and observe without ever touching a secret. Every project gets its own keys, budget cap, audit trail and invoice — pay for exactly the project you choose, when you choose."
+            />
+          </Reveal>
+        </div>
       </section>
 
       {/* ── Managed agents ───────────────────────────────────────────────── */}
-      <section className="border-t border-border bg-surface">
+      <section className="border-t border-border">
         <div className="mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal>
             <SectionHeading
@@ -354,13 +431,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <Reveal>
-          <SectionHeading eyebrow="FAQ" title="The questions engineers actually ask." />
-        </Reveal>
-        <Reveal className="mt-10" delay={0.08}>
-          <Faq items={FAQ_ITEMS} />
-        </Reveal>
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <Reveal>
+            <SectionHeading eyebrow="FAQ" title="The questions engineers actually ask." />
+          </Reveal>
+          <Reveal className="mt-10" delay={0.08}>
+            <Faq items={FAQ_ITEMS} />
+          </Reveal>
+        </div>
       </section>
 
       <CtaBand />

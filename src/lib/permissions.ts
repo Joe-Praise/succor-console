@@ -17,6 +17,7 @@ export const PERMISSIONS = {
   "project.read":             "developer",
   "project.usage.read":       "developer",
   "project.logs.read":        "developer",
+  "project.audit.read":       "developer",
   "project.playground.run":   "developer",
   "project.support.write":    "developer",
 
@@ -26,6 +27,9 @@ export const PERMISSIONS = {
   "project.keys.write":       "admin",
   "project.callbackKey.rotate": "admin",
   "project.agentRequests.write": "admin",
+  // 4I.5 (PD-11): issuing/revoking an agent's tool grants is the same authority
+  // that registers the MCP server and supplies its credential.
+  "project.toolGrants.write":  "admin",
 
   // Billing (developers never see money; only the org owner moves it)
   "org.billing.read":         "admin",
