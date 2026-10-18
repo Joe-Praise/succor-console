@@ -7,17 +7,15 @@ import { ActivityIcon } from "lucide-react";
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useRuns, useOpsSummary } from "@/features/executions/hooks";
 import { useAgentNames } from "@/features/agents/use-agent-names";
+import { runColumns } from "@/features/executions/run-columns";
 import { useUrlFilters } from "@/lib/url-filters";
 import { isRangeKey, rangeBounds, type RangeKey } from "@/lib/time-range";
-import { LIVE_JOB_STATUSES } from "@/lib/status";
-import { duration, elapsedMs, relativeTime, dateTime, usdPrecise, shortId } from "@/lib/format";
-import type { RunRow } from "@/types";
+import { shortId } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnyStatusBadge } from "@/components/ui/status-badge";
-import { DataTable, type Column } from "@/components/ops/data-table";
-import { CursorPager, DeliveryBadge, ToneDot } from "@/components/ops/primitives";
+import { DataTable } from "@/components/ops/data-table";
+import { CursorPager, ToneDot } from "@/components/ops/primitives";
 import { FilterBar, SelectFilter, TimeRangeTabs, SearchFilter } from "@/components/ops/filters";
 
 const FILTER_KEYS = ["status", "agent", "range", "request", "workflow"] as const;
@@ -77,81 +75,7 @@ function RunsExplorer() {
   const rows = runs.data?.pages.flatMap((p) => p.jobs) ?? [];
   const base = `/o/${orgId}/p/${projectId}`;
 
-  const columns: Column<RunRow>[] = [
-    {
-      id: "status",
-      header: "Status",
-      cell: (r) => <AnyStatusBadge value={r.status} />,
-    },
-    {
-      id: "run",
-      header: "Run",
-      cell: (r) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">{nameOf(r.agentType)}</p>
-          <p className="font-mono text-[11px] text-faint">{shortId(r.id)}</p>
-        </div>
-      ),
-    },
-    {
-      id: "outcome",
-      header: "Outcome",
-      cell: (r) => (r.runStatus ? <AnyStatusBadge value={r.runStatus} /> : <span className="text-faint">—</span>),
-    },
-    {
-      id: "delivery",
-      header: "Delivery",
-      cell: (r) => (r.delivery ? <DeliveryBadge delivery={r.delivery} /> : <span className="text-faint">—</span>),
-    },
-    {
-      id: "attempts",
-      header: "Attempts",
-      align: "right",
-      cell: (r) => (
-        <span className={r.attempt > 1 ? "text-warning" : "text-muted-foreground"}>
-          {r.attempt}/{r.maxAttempts}
-        </span>
-      ),
-    },
-    {
-      id: "created",
-      header: "Created",
-      cell: (r) => (
-        <span className="text-muted-foreground" title={dateTime(r.createdAt)}>
-          {relativeTime(r.createdAt)}
-        </span>
-      ),
-    },
-    {
-      id: "elapsed",
-      header: "Elapsed",
-      align: "right",
-      cell: (r) =>
-        LIVE_JOB_STATUSES.has(r.status) ? (
-          <span className="text-info">in progress</span>
-        ) : (
-          <span className="text-muted-foreground" title="Job created → last recorded state change">
-            {duration(elapsedMs(r.createdAt, r.updatedAt))}
-          </span>
-        ),
-    },
-    {
-      id: "billed",
-      header: "Billed",
-      align: "right",
-      cell: (r) =>
-        r.cost ? (
-          <span title={`Provider cost ${usdPrecise(r.cost.costUsd)}`}>{usdPrecise(r.cost.billedUsd)}</span>
-        ) : (
-          <span className="text-faint">—</span>
-        ),
-    },
-    {
-      id: "actor",
-      header: "Initiated by",
-      cell: (r) => <span className="block max-w-40 truncate font-mono text-[11px] text-faint">{r.initiatedBy}</span>,
-    },
-  ];
+  const columns = runColumns(nameOf);
 
   return (
     <div className="space-y-5">

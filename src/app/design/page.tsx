@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { usdPrecise } from "@/lib/format";
 import { gsap, prefersReducedMotion, animateCounter } from "@/lib/gsap";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -161,10 +162,6 @@ const TYPE_SCALE: {
   { name: "label", px: 13, lh: 18, w: 500, tr: "0", sample: "Field label" },
   { name: "caption", px: 12, lh: 16, w: 500, tr: "0.01em", sample: "Secondary caption text" },
 ];
-
-function usd(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 3 });
-}
 
 /* ---- page ---------------------------------------------------------------- */
 
@@ -405,7 +402,7 @@ export default function DesignSystemPage() {
                     <TableCell className="font-mono">{r.agent}</TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{r.tokens.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">{usd(r.billed)}</TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{usdPrecise(r.billed)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

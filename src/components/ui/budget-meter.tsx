@@ -3,16 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { usd } from "@/lib/format";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
-
-function usd(n: number) {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 interface BudgetMeterProps {
   spent: number;

@@ -16,7 +16,6 @@ export const invoiceKey = (projectId: string, invoiceNumber: string) =>
   ["projects", projectId, "invoices", "detail", invoiceNumber] as const;
 export const catalogKey = (projectId?: string) => ["catalog", projectId ?? "global"] as const;
 export const agentRequestsKey = (projectId: string) => ["projects", projectId, "agent-requests"] as const;
-export const logsKey = (projectId: string) => ["projects", projectId, "logs"] as const;
 export const callbacksKey = (projectId: string) => ["projects", projectId, "callbacks"] as const;
 export const playgroundRunsKey = (projectId: string) => ["projects", projectId, "playground"] as const;
 
@@ -143,15 +142,6 @@ export function useCreateAgentRequest(projectId: string) {
     mutationFn: (input: projectsApi.CreateAgentRequestInput) =>
       projectsApi.createAgentRequest(projectId, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: agentRequestsKey(projectId) }),
-  });
-}
-
-export function useLogs(projectId: string, limit = 50) {
-  return useQuery({
-    queryKey: [...logsKey(projectId), limit],
-    queryFn: () => projectsApi.listLogs(projectId, limit),
-    enabled: !!projectId,
-    refetchInterval: 15_000,
   });
 }
 

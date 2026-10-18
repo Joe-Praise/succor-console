@@ -4,7 +4,8 @@ import { ReceiptIcon } from "lucide-react";
 
 import { useOrgCtx } from "@/features/orgs/org-context";
 import { useOrgBillingSummary, useOrgInvoices } from "@/features/orgs/hooks";
-import { InvoiceTable, usd } from "@/features/invoices/invoice-ui";
+import { InvoiceTable } from "@/features/invoices/invoice-ui";
+import { usd } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -154,14 +154,8 @@ export function createAgentRequest(projectId: string, input: CreateAgentRequestI
 }
 
 // ---------------------------------------------------------------------------
-// Logs & callback deliveries (loosely typed — display-only tables)
+// Callback deliveries (priced run records live in api/executions.ts)
 // ---------------------------------------------------------------------------
-
-const LogsSchema = z.array(z.record(z.string(), z.unknown()));
-
-export function listLogs(projectId: string, limit = 50) {
-  return bff(`/api/bff/projects/${projectId}/logs?limit=${limit}`, { schema: LogsSchema });
-}
 
 const DeliveriesSchema = z.object({ deliveries: z.array(CallbackDeliverySchema) });
 

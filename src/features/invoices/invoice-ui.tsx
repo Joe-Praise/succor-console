@@ -24,7 +24,6 @@ import { DataTable, type Column } from "@/components/ops/data-table";
 import { ApiError } from "@/api/client";
 import type { Invoice } from "@/types";
 
-export { usd } from "@/lib/format";
 import { usd } from "@/lib/format";
 
 export function periodLabel(inv: Invoice) {

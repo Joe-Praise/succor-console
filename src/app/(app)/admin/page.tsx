@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
 import { useAdminOverview } from "@/features/admin/hooks";
-import { usd } from "@/features/invoices/invoice-ui";
+import { usd } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

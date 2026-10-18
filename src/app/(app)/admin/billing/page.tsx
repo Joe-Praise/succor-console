@@ -10,7 +10,8 @@ import {
   useBillingSettings,
   useUpdateBillingSettings,
 } from "@/features/admin/hooks";
-import { usd, periodLabel } from "@/features/invoices/invoice-ui";
+import { periodLabel } from "@/features/invoices/invoice-ui";
+import { usd } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
