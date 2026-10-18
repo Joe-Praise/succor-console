@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { LifecycleDiagram } from "@/components/marketing/lifecycle-diagram";
 import { Reveal } from "@/components/marketing/reveal";
 import { SectionHeading, CtaBand, Faq } from "@/components/marketing/section";
+import { ExecutionPreview } from "@/components/marketing/previews/execution-preview";
+import { UsagePreview } from "@/components/marketing/previews/usage-preview";
 
 export const metadata: Metadata = {
   title: `${BRAND_NAME} — production agents, workflows & automation`,
@@ -192,9 +194,9 @@ export default function LandingPage() {
           </Button>
         </div>
 
-        <div className="mt-14">
-          <LifecycleDiagram />
-        </div>
+        <Reveal className="mx-auto mt-14 max-w-5xl" delay={0.1}>
+          <ExecutionPreview />
+        </Reveal>
 
         {/* Trust bar */}
         <p className="mt-10 text-sm text-faint">
@@ -236,6 +238,9 @@ export default function LandingPage() {
             eyebrow="Integration"
             title="One call out. One callback in. That's the whole integration."
           />
+        </Reveal>
+        <Reveal className="mt-12" delay={0.06}>
+          <LifecycleDiagram />
         </Reveal>
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {STEPS.map((s, i) => (
@@ -349,7 +354,7 @@ export default function LandingPage() {
 
       {/* ── Billing transparency ─────────────────────────────────────────── */}
       <section className="border-t border-border">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <Reveal>
             <SectionHeading
               align="left"
@@ -365,41 +370,7 @@ export default function LandingPage() {
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <div className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-faint">
-                    <th className="pb-2 font-normal">agent</th>
-                    <th className="pb-2 text-right font-normal">tokens</th>
-                    <th className="pb-2 text-right font-normal">cost</th>
-                    <th className="pb-2 text-right font-normal">billed</th>
-                  </tr>
-                </thead>
-                <tbody className="text-muted-foreground">
-                  <tr>
-                    <td className="py-1">seo-page-factory</td>
-                    <td className="py-1 text-right">3,912</td>
-                    <td className="py-1 text-right">$0.0104</td>
-                    <td className="py-1 text-right text-foreground">$0.0312</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1">quiz-generator</td>
-                    <td className="py-1 text-right">1,204</td>
-                    <td className="py-1 text-right">$0.0031</td>
-                    <td className="py-1 text-right text-foreground">$0.0093</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1">visual-tagger</td>
-                    <td className="py-1 text-right">688</td>
-                    <td className="py-1 text-right">$0.0019</td>
-                    <td className="py-1 text-right text-foreground">$0.0057</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="mt-3 text-[10px] text-faint">
-                Illustrative figures — your dashboard shows exact numbers per run.
-              </p>
-            </div>
+            <UsagePreview />
           </Reveal>
         </div>
       </section>

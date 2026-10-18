@@ -137,3 +137,24 @@ Rework `p/[projectId]/usage/page.tsx`: time range in URL; KPI row (provider cost
 5. Runtime (needs live Mongo + backend): `npm run dev` both; seed via playground/`scripts/dev-tenant-receiver.ts` (:4100 `/fail`); walk: run → runs list → detail (timeline, delivery failing then retrying, cost rows) → usage record → back to run; approve/reject a gated seo-page-factory job (OpenAI quota permitting — previously exhausted); confirm developer role sees no admin actions and a foreign project id 404s.
 
 Report after each phase: files changed, contracts reused, gaps found, test results, limitations. Each phase = one commit.
+
+---
+
+## Status — as built (2026-10-18)
+
+| Phase | Commit | Notes |
+|---|---|---|
+| 1 Backend read surface | agent-service `16cf15e`, `9220313` | `routes/executions.ts` + `lib/cursor.ts`, 16 route tests. The backend must be restarted to serve them. |
+| 2–3b Foundation, runs, record pages | portal `95f535e` | Theme split, ops components, runs explorer and detail, a page for every record, clickable rows. |
+| 4 Usage & economics | portal `a61296b` | `features/usage/series.ts` (tested). |
+| 5 Overview, approvals, org health | portal `6d785ac` | `features/executions/ops.ts` (tested), shared `run-columns.tsx`. |
+| 5 Marketing previews | portal (this branch, last commit) | `components/marketing/previews/*`: real console components rendering sample data, framed and labelled "Illustrative". |
+
+**Verified:** `tsc --noEmit` clean, `eslint src` 0 problems, `vitest` 46 tests in 7 files.
+
+**Not yet verified:** verification steps 3–5 above (row navigation, theme and runtime walkthroughs) need the live backend and a browser.
+
+**Deviations from the plan:**
+- The API-key page can't list "runs started by this key". The API-key actor is `apikey:<projectId>`, so it's recorded as a Category C gap.
+- Approval history is split into Approved and Rejected views. The ledger filters on one exact action, so the console doesn't merge two cursors client-side.
+- Effect `failed` is terminal (permanent). A retry is shown as `ready` with an error.
