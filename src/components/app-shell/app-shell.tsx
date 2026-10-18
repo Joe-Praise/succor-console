@@ -4,35 +4,28 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboardIcon,
-  BarChart3Icon,
-  ReceiptIcon,
-  KeyRoundIcon,
-  BoxesIcon,
-  SettingsIcon,
-  GaugeIcon,
-  FolderKanbanIcon,
-  InboxIcon,
-  WalletIcon,
-  UsersIcon,
-  ScrollTextIcon,
-  BookOpenIcon,
   MenuIcon,
   ChevronsUpDownIcon,
   LogOutIcon,
   CommandIcon,
   CheckIcon,
   Building2Icon,
-  WebhookIcon,
-  FlaskConicalIcon,
   PlusIcon,
   UserCogIcon,
-  type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/brand";
 import { ORG_ROLE_RANK, type OrgRole } from "@/lib/permissions";
+import {
+  ADMIN_NAV,
+  isActive,
+  orgNav,
+  parseScope,
+  projectNavGroups,
+  type NavItem,
+} from "@/lib/nav";
+import { useApprovals } from "@/features/runtime/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -58,62 +51,19 @@ import {
 import { useMe, useLogout } from "@/features/auth/hooks";
 import type { Me, OrgRef } from "@/types";
 
-type NavItem = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  exact?: boolean;
-  /** Minimum org role to SEE this item (billing is hidden from developers). */
-  minRole?: OrgRole;
-};
+/** Re-exported for existing importers; the source of truth is lib/nav. */
+export { parseScope };
 
-/** Parse /o/[orgId](/p/[projectId])?/… into scope. */
-export function parseScope(pathname: string): { orgId: string | null; projectId: string | null } {
-  const m = /^\/o\/([^/]+)(?:\/p\/([^/]+))?/.exec(pathname);
-  return { orgId: m?.[1] ?? null, projectId: m?.[2] ?? null };
-}
-
-function orgNav(orgId: string): NavItem[] {
-  const base = `/o/${orgId}`;
-  return [
-    { label: "Overview", href: base, icon: LayoutDashboardIcon, exact: true },
-    { label: "Projects", href: `${base}/projects`, icon: FolderKanbanIcon },
-    { label: "Team", href: `${base}/team`, icon: UsersIcon },
-    { label: "Billing", href: `${base}/billing`, icon: WalletIcon, minRole: "admin" },
-    { label: "Settings", href: `${base}/settings`, icon: SettingsIcon },
-  ];
-}
-
-function projectNav(orgId: string, projectId: string): NavItem[] {
-  const base = `/o/${orgId}/p/${projectId}`;
-  return [
-    { label: "Overview", href: base, icon: GaugeIcon, exact: true },
-    { label: "Usage", href: `${base}/usage`, icon: BarChart3Icon },
-    { label: "API keys", href: `${base}/keys`, icon: KeyRoundIcon },
-    { label: "Agents", href: `${base}/agents`, icon: BoxesIcon },
-    { label: "Docs", href: `${base}/docs`, icon: BookOpenIcon },
-    { label: "Callbacks", href: `${base}/callbacks`, icon: WebhookIcon },
-    { label: "Logs", href: `${base}/logs`, icon: ScrollTextIcon },
-    { label: "Playground", href: `${base}/playground`, icon: FlaskConicalIcon },
-    { label: "Invoices", href: `${base}/invoices`, icon: ReceiptIcon, minRole: "admin" },
-    { label: "Settings", href: `${base}/settings`, icon: SettingsIcon },
-  ];
-}
-
-const ADMIN_NAV: NavItem[] = [
-  { label: "Overview", href: "/admin", icon: GaugeIcon, exact: true },
-  { label: "Organizations", href: "/admin/orgs", icon: Building2Icon },
-  { label: "Projects", href: "/admin/projects", icon: FolderKanbanIcon },
-  { label: "Requests", href: "/admin/requests", icon: InboxIcon },
-  { label: "Billing", href: "/admin/billing", icon: WalletIcon },
-  { label: "Users", href: "/admin/users", icon: UsersIcon },
-  { label: "Logs", href: "/admin/logs", icon: ScrollTextIcon },
-];
-
-function isActive(pathname: string, item: NavItem) {
-  return item.exact
-    ? pathname === item.href
-    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+/** Live count of held deliveries — the one nav item that carries a number. */
+function ApprovalsCount({ projectId }: { projectId: string }) {
+  const approvals = useApprovals(projectId);
+  const n = approvals.data?.approvals.length ?? 0;
+  if (n === 0) return null;
+  return (
+    <span className="ml-auto rounded-full bg-warning-bg px-1.5 text-[11px] font-semibold tabular-nums text-warning">
+      {n}
+    </span>
+  );
 }
 
 function NavList({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
@@ -126,30 +76,33 @@ function NavList({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
   const visible = (items: NavItem[]) =>
     items.filter((i) => !i.minRole || ORG_ROLE_RANK[role] >= ORG_ROLE_RANK[i.minRole]);
 
+  const link = (item: NavItem) => {
+    const active = isActive(pathname, item);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+          active
+            ? "bg-brand-muted text-brand"
+            : "text-muted-foreground hover:bg-raised hover:text-foreground",
+        )}
+      >
+        <item.icon className={cn("size-4 shrink-0", active ? "text-brand" : "text-faint")} />
+        {item.label}
+        {projectId && item.href.endsWith("/approvals") ? <ApprovalsCount projectId={projectId} /> : null}
+      </Link>
+    );
+  };
+
   // Keyed by a stable section id, NOT the display label — an org and a project
   // can share a name (e.g. both called "EduCourse").
   const section = (id: string, label: string, items: NavItem[]) => (
-    <div className="space-y-1" key={id}>
+    <div className="space-y-0.5" key={id}>
       <p className="truncate px-3 pb-1 text-xs font-medium text-faint">{label}</p>
-      {items.map((item) => {
-        const active = isActive(pathname, item);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-brand-muted text-brand"
-                : "text-muted-foreground hover:bg-raised hover:text-foreground",
-            )}
-          >
-            <item.icon className={cn("size-4 shrink-0", active ? "text-brand" : "text-faint")} />
-            {item.label}
-          </Link>
-        );
-      })}
+      {items.map(link)}
     </div>
   );
 
@@ -159,7 +112,25 @@ function NavList({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
     if (projectId) {
       const project = org?.projects.find((p) => p.projectId === projectId);
       sections.push(
-        section("project", project?.name ?? projectId, visible(projectNav(orgId, projectId))),
+        <div className="space-y-3" key="project">
+          <p className="truncate px-3 text-xs font-medium text-faint">
+            {project?.name ?? projectId}
+          </p>
+          {projectNavGroups(orgId, projectId).map((g) => {
+            const items = visible(g.items);
+            if (items.length === 0) return null;
+            return (
+              <div key={g.id} className="space-y-0.5">
+                {g.label ? (
+                  <p className="px-3 pb-0.5 font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                    {g.label}
+                  </p>
+                ) : null}
+                {items.map(link)}
+              </div>
+            );
+          })}
+        </div>,
       );
     }
   } else if (!me.isPlatformAdmin) {

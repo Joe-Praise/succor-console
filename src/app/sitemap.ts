@@ -5,7 +5,7 @@ import { MARKETING_CATALOG } from "@/data/marketing-catalog";
 
 /** Public marketing routes + one indexable page per agent. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "/pricing", "/agents", "/contact"].map((path) => ({
+  const pages = ["", "/platform", "/pricing", "/agents", "/contact"].map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "" ? 1 : 0.7,

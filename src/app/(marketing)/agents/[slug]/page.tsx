@@ -49,7 +49,9 @@ Content-Type: application/json
 
 { "projectId": "your-project", "requestId": "unique-per-call", ... }
 
-→ 202 Accepted   // we run it, then POST the signed result to your callback`;
+→ 202 Accepted  { "jobId": "…" }
+   // a durable job runs it, then delivers the signed result to your callback
+   // (or poll GET /agents/jobs/:jobId)`;
 
   return (
     <>
@@ -87,8 +89,9 @@ Content-Type: application/json
       <section className="mx-auto max-w-3xl px-6 py-10">
         <h2 className="text-sm font-medium text-faint">How you call it</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          One POST from your backend with your API key — we run it and deliver a signed result to
-          your callback. No polling, no model to manage.
+          One POST from your backend with your API key. It becomes a durable job — leased, checkpointed,
+          metered once — and the validated result is delivered to your callback. Poll the job if you
+          prefer pull. No model to manage.
         </p>
         <pre className="mt-4 overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed text-muted-foreground">
           {callSnippet}

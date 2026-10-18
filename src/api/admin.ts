@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { bff } from "./client";
-import { InvoiceSchema } from "@/types";
+import { InvoiceSchema, SupportTicketSchema, type TicketStatus } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Platform-admin API (agent-service /admin-api + /billing, owner-gated).
@@ -189,6 +189,21 @@ export function patchAdminAgentRequest(
   input: { status: string; adminNotes?: string | null },
 ) {
   return bff(`/api/bff/admin-api/agent-requests/${id}`, { method: "PATCH", body: input });
+}
+
+// Support tickets (tenant-opened; owner triages status + notes)
+export function listAdminTickets(status?: string) {
+  const qs = status ? `?status=${status}` : "";
+  return bff(`/api/bff/admin-api/support-tickets${qs}`, {
+    schema: z.object({ tickets: z.array(SupportTicketSchema) }),
+  });
+}
+
+export function patchAdminTicket(
+  id: string,
+  input: { status: TicketStatus; adminNotes?: string | null },
+) {
+  return bff(`/api/bff/admin-api/support-tickets/${id}`, { method: "PATCH", body: input });
 }
 
 // Logs

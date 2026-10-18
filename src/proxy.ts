@@ -53,5 +53,6 @@ export const config = {
     "/account/:path*",
     "/login",
     "/register",
+    "/forgot-password",
   ],
 };

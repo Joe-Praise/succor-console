@@ -1,11 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  StampIcon,
+  WebhookIcon,
+  WalletIcon,
+  CircleDashedIcon,
+  WorkflowIcon,
+  PlugZapIcon,
+  FingerprintIcon,
+  IdCardIcon,
+} from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, YAxis } from "recharts";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
-import { useProjectSetup, useCurrentUsage, useUsage, useLogs } from "@/features/projects/hooks";
+import {
+  useProjectSetup,
+  useCurrentUsage,
+  useUsage,
+  useLogs,
+  useKeys,
+  useCallbacks,
+} from "@/features/projects/hooks";
+import { useOrgProjects } from "@/features/orgs/hooks";
+import { useApprovals } from "@/features/runtime/hooks";
+import { useProfile } from "@/features/governance/hooks";
 import { usd } from "@/features/invoices/invoice-ui";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
@@ -25,6 +46,7 @@ interface LogRow {
   agentType?: string;
   status?: string;
   billedUsd?: number | null;
+  jobId?: string | null;
 }
 
 function fmt(d: Date) {
@@ -94,9 +116,16 @@ function RecentRuns({ orgId, projectId }: { orgId: string; projectId: string }) 
               return (
                 <li key={log._id ?? i} className="flex items-center justify-between gap-3 py-2">
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs text-foreground">
-                      {log.agentType ?? "—"}
-                    </p>
+                    {log.jobId ? (
+                      <Link
+                        href={`/o/${orgId}/p/${projectId}/jobs/${log.jobId}`}
+                        className="block truncate font-mono text-xs text-foreground hover:text-brand"
+                      >
+                        {log.agentType ?? "—"}
+                      </Link>
+                    ) : (
+                      <p className="truncate font-mono text-xs text-foreground">{log.agentType ?? "—"}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {log.ts ? new Date(log.ts).toLocaleString() : "—"}
                     </p>
@@ -119,6 +148,190 @@ function RecentRuns({ orgId, projectId }: { orgId: string; projectId: string }) 
   );
 }
 
+/** Things that need a human, surfaced before anything else. Silent when all clear. */
+function AttentionStrip({ orgId, projectId }: { orgId: string; projectId: string }) {
+  const approvals = useApprovals(projectId);
+  const failed = useCallbacks(projectId, 50, false);
+  const usage = useCurrentUsage(projectId);
+  const base = `/o/${orgId}/p/${projectId}`;
+
+  const items: Array<{ href: string; icon: typeof StampIcon; text: string; tone: string }> = [];
+  const waiting = approvals.data?.approvals.length ?? 0;
+  if (waiting > 0) {
+    items.push({
+      href: `${base}/approvals`,
+      icon: StampIcon,
+      text: `${waiting} deliver${waiting === 1 ? "y is" : "ies are"} waiting for approval`,
+      tone: "bg-warning-bg text-warning",
+    });
+  }
+  const failedCount = failed.data?.deliveries.length ?? 0;
+  if (failedCount > 0) {
+    items.push({
+      href: `${base}/callbacks`,
+      icon: WebhookIcon,
+      text: `${failedCount}${failedCount === 50 ? "+" : ""} callback${failedCount === 1 ? "" : "s"} failed to reach your API in the last 30 days`,
+      tone: "bg-error-bg text-error",
+    });
+  }
+  const u = usage.data;
+  if (u?.monthlyBudgetUsd && u.billedUsd >= u.monthlyBudgetUsd * 0.8) {
+    items.push({
+      href: `${base}/usage`,
+      icon: WalletIcon,
+      text: u.budgetExceeded
+        ? "Monthly budget reached — agent calls return 402 until it resets"
+        : `${Math.round((u.billedUsd / u.monthlyBudgetUsd) * 100)}% of this month's budget used`,
+      tone: u.budgetExceeded ? "bg-error-bg text-error" : "bg-warning-bg text-warning",
+    });
+  }
+  if (items.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      {items.map((i) => (
+        <Link
+          key={i.href + i.text}
+          href={i.href}
+          className={cn(
+            "flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm transition-opacity hover:opacity-90",
+            i.tone,
+          )}
+        >
+          <span className="flex items-center gap-2.5">
+            <i.icon className="size-4 shrink-0" aria-hidden />
+            {i.text}
+          </span>
+          <ArrowRightIcon className="size-4 shrink-0" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/** Go-live checklist, derived entirely from live state — nothing to tick by hand. */
+function SetupChecklist({ orgId, projectId }: { orgId: string; projectId: string }) {
+  const setup = useProjectSetup(projectId);
+  const keys = useKeys(projectId);
+  const projects = useOrgProjects(orgId);
+  const profile = useProfile(projectId);
+  const logs = useLogs(projectId, 5);
+  const base = `/o/${orgId}/p/${projectId}`;
+
+  const project = projects.data?.projects.find((p) => p.projectId === projectId);
+  const steps = [
+    {
+      done: setup.data?.status === "approved",
+      label: "Project approved",
+      hint: "Agents run once the platform approves the project.",
+      href: null,
+    },
+    {
+      done: (setup.data?.enabledAgents.length ?? 0) > 0,
+      label: "Agents enabled",
+      hint: "Browse the catalog and request what you need.",
+      href: `${base}/agents`,
+    },
+    {
+      done: !!project?.apiBaseUrls?.some((u) => !!u.url),
+      label: "Callback base URL set",
+      hint: "Where results are delivered.",
+      href: `${base}/settings`,
+    },
+    {
+      done: (keys.data?.keys ?? []).some((k) => !k.revokedAt),
+      label: "API key minted",
+      hint: "Your backend's credential.",
+      href: `${base}/keys`,
+    },
+    {
+      done: !!profile.data?.profile,
+      label: "Business profile described",
+      hint: "Optional — makes every output sound like you.",
+      href: `${base}/profile`,
+    },
+    {
+      done: (logs.data?.length ?? 0) > 0,
+      label: "First run completed",
+      hint: "Try the playground, or call from your backend.",
+      href: `${base}/playground`,
+    },
+  ];
+  const loading =
+    setup.isLoading || keys.isLoading || projects.isLoading || profile.isLoading || logs.isLoading;
+  const doneCount = steps.filter((s) => s.done).length;
+  if (!loading && doneCount === steps.length) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <CardTitle>Go-live checklist</CardTitle>
+            <CardDescription>Read from live state — it completes itself as you go.</CardDescription>
+          </div>
+          <span className="font-mono text-sm text-brand tabular-nums">
+            {loading ? "…" : `${doneCount}/${steps.length}`}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : (
+          <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {steps.map((s) => {
+              const inner = (
+                <>
+                  <span
+                    className={cn(
+                      "grid size-5 shrink-0 place-items-center rounded-full",
+                      s.done ? "bg-success text-white" : "border border-strong text-faint",
+                    )}
+                  >
+                    {s.done ? <CheckIcon className="size-3" /> : <CircleDashedIcon className="size-3" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span
+                      className={cn(
+                        "block text-sm font-medium",
+                        s.done ? "text-muted-foreground line-through" : "text-foreground",
+                      )}
+                    >
+                      {s.label}
+                    </span>
+                    {!s.done ? <span className="block text-xs text-muted-foreground">{s.hint}</span> : null}
+                  </span>
+                </>
+              );
+              return (
+                <li key={s.label}>
+                  {s.href && !s.done ? (
+                    <Link
+                      href={s.href}
+                      className="flex items-start gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-strong"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className="flex items-start gap-3 rounded-lg border border-border px-3 py-2.5">{inner}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const PLATFORM_LINKS = [
+  { href: "workflows", icon: WorkflowIcon, title: "Workflows", body: "Chain agents into durable, resumable pipelines." },
+  { href: "tools", icon: PlugZapIcon, title: "Tools", body: "Let tool-ready agents read your systems over MCP." },
+  { href: "profile", icon: IdCardIcon, title: "Profile", body: "One description of your business, read by every prompt." },
+  { href: "audit", icon: FingerprintIcon, title: "Audit", body: "Signed record of every approval and privileged action." },
+];
+
 export default function ProjectOverviewPage() {
   const { orgId, projectId, project } = useProjectScope();
   const setup = useProjectSetup(projectId);
@@ -134,7 +347,7 @@ export default function ProjectOverviewPage() {
     <div className="space-y-8">
       <PageHeader
         title={project?.name ?? projectId}
-        description="Connection details, this month's spend, and what's enabled."
+        description="What needs you, how close you are to live, and what this month has cost."
         action={
           setup.data ? (
             <StatusBadge
@@ -147,6 +360,9 @@ export default function ProjectOverviewPage() {
           ) : undefined
         }
       />
+
+      <AttentionStrip orgId={orgId} projectId={projectId} />
+      <SetupChecklist orgId={orgId} projectId={projectId} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -209,6 +425,26 @@ export default function ProjectOverviewPage() {
       </div>
 
       <RecentRuns orgId={orgId} projectId={projectId} />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-faint">More than single calls</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {PLATFORM_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={`/o/${orgId}/p/${projectId}/${l.href}`}
+              className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-strong"
+            >
+              <l.icon className="size-4 text-brand" aria-hidden />
+              <p className="mt-2 flex items-center gap-1 text-sm font-medium text-foreground">
+                {l.title}
+                <ArrowRightIcon className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{l.body}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <Card>
         <CardHeader>

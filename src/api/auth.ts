@@ -45,6 +45,28 @@ export function changePassword(input: ChangePasswordInput) {
   });
 }
 
+/** Always resolves with the same message whether or not the account exists. */
+export function forgotPassword(email: string) {
+  return bff("/api/bff/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+    schema: z.object({ ok: z.literal(true), message: z.string() }),
+  });
+}
+
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
+}
+
+export function resetPassword(input: ResetPasswordInput) {
+  return bff("/api/bff/auth/reset-password", {
+    method: "POST",
+    body: input,
+    schema: z.object({ ok: z.literal(true) }),
+  });
+}
+
 export function logout() {
   return bff("/api/bff/auth/logout", { method: "POST" });
 }

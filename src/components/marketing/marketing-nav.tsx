@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
+  { label: "Platform", href: "/platform" },
   { label: "Agents", href: "/agents" },
   { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
@@ -108,6 +109,9 @@ export function MarketingFooter() {
           agents, workflows, and automation, metered and billed.
         </p>
         <nav className="flex items-center gap-5">
+          <Link href="/platform" className="hover:text-foreground">
+            Platform
+          </Link>
           <Link href="/agents" className="hover:text-foreground">
             Agents
           </Link>

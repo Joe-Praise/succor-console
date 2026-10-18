@@ -275,6 +275,15 @@ export const CatalogEntrySchema = z.object({
   callbackMethod: z.string(),
   callbackExample: z.record(z.string(), z.unknown()),
   typicalMaxTokens: z.number(),
+  /** Per-agent model override — absent means the platform default model. */
+  model: z.string().optional(),
+  maxTokens: z.number().optional(),
+  /** "high" → the agent's delivery is held for human approval before it fires. */
+  riskTier: z.enum(["low", "medium", "high"]).optional(),
+  /** "protected" → durable payloads encrypted at rest; vector + memory export refused. */
+  dataClass: z.enum(["internal", "protected"]).optional(),
+  /** Platform opt-in to a bounded tool round (the code half of a tool capability). */
+  toolsEnabled: z.boolean().optional(),
   enabledForProject: z.boolean().optional(),
 });
 export type CatalogEntry = z.infer<typeof CatalogEntrySchema>;
@@ -292,3 +301,178 @@ export const AgentRequestSchema = z.object({
   createdAt: z.coerce.date().optional(),
 });
 export type AgentRequest = z.infer<typeof AgentRequestSchema>;
+
+// ---------------------------------------------------------------------------
+// Runtime — durable jobs, approvals, workflows (agent-service Phase 1/5/7)
+// ---------------------------------------------------------------------------
+
+/** AgentJob lifecycle (agent-service models/agent-job.model.ts). */
+export const JobStatusSchema = z.enum([
+  "queued",
+  "running",
+  "succeeded",
+  "dead",
+  "pending_approval",
+  "rejected",
+]);
+export type JobStatus = z.infer<typeof JobStatusSchema>;
+
+/** GET /agents/jobs/:jobId → { job }. `result` is decoded server-side (null if erased). */
+export const JobSchema = z.object({
+  _id: z.string(),
+  projectId: z.string(),
+  agentType: z.string(),
+  status: z.string(),
+  runStatus: z.string().nullable().optional(),
+  attempt: z.number(),
+  maxAttempts: z.number(),
+  lastError: z.string().nullable().optional(),
+  result: z.unknown().optional(),
+  resultUndecodable: z.boolean().optional(),
+  initiatedBy: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+export type Job = z.infer<typeof JobSchema>;
+
+/** One row of GET /portal/projects/:id/approvals — what WILL be delivered on approve. */
+export const ApprovalSchema = z.object({
+  jobId: z.string(),
+  agentType: z.string(),
+  createdAt: z.coerce.date().optional(),
+  attempt: z.number().optional(),
+  target: z.object({ method: z.string(), path: z.string() }).nullable().optional(),
+  preview: z.unknown().optional(),
+  undecodable: z.boolean().optional(),
+});
+export type Approval = z.infer<typeof ApprovalSchema>;
+
+export const WorkflowStatusSchema = z.enum(["running", "paused", "succeeded", "failed"]);
+export type WorkflowStatus = z.infer<typeof WorkflowStatusSchema>;
+
+export const WorkflowStepSchema = z.object({
+  name: z.string(),
+  agentType: z.string(),
+  kind: z.string(), // single | fanout | gate
+  status: z.string(), // pending | running | critiquing | succeeded | failed | paused
+  jobIds: z.array(z.string()),
+  criticJobId: z.string().nullable().optional(),
+  attempt: z.number().optional(),
+  note: z.string().nullable().optional(),
+});
+export type WorkflowStep = z.infer<typeof WorkflowStepSchema>;
+
+export const WorkflowSchema = z.object({
+  id: z.string(),
+  workflowType: z.string(),
+  status: z.string(),
+  currentStep: z.number(),
+  steps: z.array(WorkflowStepSchema),
+  lastError: z.string().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+export type Workflow = z.infer<typeof WorkflowSchema>;
+
+// ---------------------------------------------------------------------------
+// Tools — MCP servers + agent-scoped tool grants (Phase 8 / 4I.5)
+// ---------------------------------------------------------------------------
+
+/** The auth token is encrypted at rest and NEVER returned — only `hasAuthToken`. */
+export const McpServerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string(),
+  enabled: z.boolean(),
+  toolAllowlist: z.array(z.string()),
+  hasAuthToken: z.boolean(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+export type McpServer = z.infer<typeof McpServerSchema>;
+
+export const SIDE_EFFECT_CLASSES = [
+  "READ_ONLY",
+  "IDEMPOTENT_WRITE",
+  "NON_IDEMPOTENT_WRITE",
+  "UNKNOWN",
+] as const;
+export type SideEffectClass = (typeof SIDE_EFFECT_CLASSES)[number];
+
+export const ToolGrantSchema = z.object({
+  id: z.string(),
+  agentType: z.string(),
+  serverId: z.string(),
+  toolName: z.string(),
+  sideEffectClass: z.string(),
+  parametersJsonSchema: z.record(z.string(), z.unknown()).nullable().optional(),
+  grantedBy: z.string(),
+  revokedAt: z.coerce.date().nullable().optional(),
+  revokedBy: z.string().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+});
+export type ToolGrant = z.infer<typeof ToolGrantSchema>;
+
+// ---------------------------------------------------------------------------
+// Governance — audit ledger, business profile, support (4H.2 / D5 / D1)
+// ---------------------------------------------------------------------------
+
+export const AUDIT_ACTIONS = [
+  "approval.approve",
+  "approval.reject",
+  "retention.erase",
+  "effect.requeue",
+  "audit.repair",
+] as const;
+export const AUDIT_OUTCOMES = ["allowed", "conflict", "refused"] as const;
+export const AUDIT_TARGET_TYPES = ["agentJob", "effect", "workflow", "auditEvent"] as const;
+
+/** An audit row. MACs are deliberately withheld — this is data, not assurance. */
+export const AuditEventSchema = z.object({
+  id: z.string(),
+  ts: z.coerce.date().optional(),
+  actor: z.string().optional(),
+  action: z.string().optional(),
+  outcome: z.string().optional(),
+  targetType: z.string().optional(),
+  targetId: z.string().optional(),
+  agentType: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  counts: z.record(z.string(), z.number()).nullable().optional(),
+  noteLength: z.number().nullable().optional(),
+  unreadable: z.boolean().optional(),
+});
+export type AuditEvent = z.infer<typeof AuditEventSchema>;
+
+export const BRAND_TONES = ["professional", "friendly", "bold", "warm", "technical", "playful"] as const;
+export type BrandTone = (typeof BRAND_TONES)[number];
+
+/** Mirrors agent-service lib/profile.ts ProjectProfile. */
+export const ProfileSchema = z.object({
+  businessType: z.string().nullable(),
+  industry: z.string().nullable(),
+  brandVoice: z.object({
+    tone: z.enum(BRAND_TONES).nullable(),
+    notes: z.string().nullable(),
+  }),
+  audience: z.string().nullable(),
+  terminology: z.array(z.string()),
+  bannedTopics: z.array(z.string()),
+});
+export type Profile = z.infer<typeof ProfileSchema>;
+
+export const TicketStatusSchema = z.enum(["open", "in_progress", "resolved", "closed"]);
+export type TicketStatus = z.infer<typeof TicketStatusSchema>;
+
+export const SupportTicketSchema = z.object({
+  _id: z.string(),
+  projectId: z.string(),
+  openedBy: z.string(),
+  subject: z.string(),
+  message: z.string(),
+  status: TicketStatusSchema,
+  adminNotes: z.string().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+export type SupportTicket = z.infer<typeof SupportTicketSchema>;

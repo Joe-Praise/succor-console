@@ -155,10 +155,10 @@ export function useLogs(projectId: string, limit = 50) {
   });
 }
 
-export function useCallbacks(projectId: string, limit = 50) {
+export function useCallbacks(projectId: string, limit = 50, ok?: boolean) {
   return useQuery({
-    queryKey: [...callbacksKey(projectId), limit],
-    queryFn: () => projectsApi.listCallbacks(projectId, limit),
+    queryKey: [...callbacksKey(projectId), limit, ok ?? "all"],
+    queryFn: () => projectsApi.listCallbacks(projectId, limit, ok),
     enabled: !!projectId,
   });
 }
