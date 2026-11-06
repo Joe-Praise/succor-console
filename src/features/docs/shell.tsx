@@ -125,10 +125,9 @@ function OnThisPage({ slug, stickyClass }: { slug: string; stickyClass: string }
   useEffect(() => {
     const article = document.getElementById("doc-article");
     if (!article) return;
-    const heads = Array.from(article.querySelectorAll<HTMLElement>("h2[id], h3[id]"));
-    setItems(heads.map((h) => ({ id: h.id, text: (h.textContent ?? "").replace(/#$/, "").trim(), level: h.tagName === "H2" ? 2 : 3 })));
-    setActive(heads[0]?.id ?? null);
     const seen = new Set<string>();
+    let heads: HTMLElement[] = [];
+    let signature = "";
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -140,8 +139,24 @@ function OnThisPage({ slug, stickyClass }: { slug: string; stickyClass: string }
       },
       { rootMargin: "-64px 0px -70% 0px" },
     );
-    heads.forEach((h) => io.observe(h));
-    return () => io.disconnect();
+    function scan() {
+      heads = Array.from(article!.querySelectorAll<HTMLElement>("h2[id], h3[id]"));
+      const next = heads.map((h) => h.id).join("|");
+      if (next === signature) return;
+      signature = next;
+      setItems(heads.map((h) => ({ id: h.id, text: (h.textContent ?? "").replace(/#$/, "").trim(), level: h.tagName === "H2" ? 2 : 3 })));
+      setActive((a) => (a && heads.some((h) => h.id === a) ? a : (heads[0]?.id ?? null)));
+      io.disconnect();
+      heads.forEach((h) => io.observe(h));
+    }
+    const frame = requestAnimationFrame(scan);
+    const watcher = new MutationObserver(scan);
+    watcher.observe(article, { childList: true, subtree: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      watcher.disconnect();
+      io.disconnect();
+    };
   }, [slug]);
 
   if (items.length < 2) return null;

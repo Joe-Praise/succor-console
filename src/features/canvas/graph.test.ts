@@ -126,7 +126,7 @@ describe("layout helpers", () => {
 
   it("opens fitted when readable, and at a readable zoom when not", () => {
     expect(openingView({ x: 0, y: 0, w: 600, h: 300 }, { w: 1400, h: 800 }).k).toBe(1);
-    expect(openingView({ x: 0, y: 0, w: 6000, h: 1000 }, { w: 1400, h: 800 }).k).toBe(0.74);
+    expect(openingView({ x: 0, y: 0, w: 6000, h: 1000 }, { w: 1400, h: 800 }).k).toBe(0.68);
   });
 
   it("joins stacked tiles bottom to top", () => {

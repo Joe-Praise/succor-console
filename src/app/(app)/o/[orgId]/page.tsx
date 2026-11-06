@@ -36,7 +36,7 @@ function MiniLine({ live, waiting, lost }: { live: number; waiting: number; lost
         <span key={s.key} className="flex flex-1 items-center last:flex-none">
           <span className={cn("size-1.5 shrink-0 rounded-full", s.tone, s.tone === "bg-info" && "animate-pulse")} />
           {i < stations.length - 1 ? (
-            <svg className="mx-0.5 h-1 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none">
+            <svg className="mx-0.5 h-1 w-0 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none">
               <line
                 x1="0"
                 y1="1"

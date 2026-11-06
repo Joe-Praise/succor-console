@@ -55,7 +55,7 @@ export function RequestJourney() {
                     )}
                   />
                   {i < JOURNEY.length - 1 ? (
-                    <svg className="mx-1 h-1 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden>
+                    <svg className="mx-1 h-1 w-0 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden>
                       <line
                         x1="0"
                         y1="1"

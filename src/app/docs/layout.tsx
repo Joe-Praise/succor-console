@@ -26,10 +26,10 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             Docs
           </Link>
           <div className="ml-auto flex items-center gap-1.5">
-            <Button variant="ghost" size="sm" render={<Link href="/platform" />}>
+            <Button variant="ghost" size="sm" className="hidden md:inline-flex" render={<Link href="/platform" />}>
               Platform
             </Button>
-            <Button variant="ghost" size="sm" render={<Link href="/login" />}>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex" render={<Link href="/login" />}>
               Sign in
             </Button>
             <Button size="sm" render={<Link href="/register" />}>

@@ -234,6 +234,7 @@ function ProjectCanvas() {
     <div className="relative min-h-0 flex-1">
       <div className="absolute inset-0 hidden md:block">
         <CanvasSurface
+          key={projectId}
           projectId={projectId}
           graph={data.graph}
           selectedId={selectedId}

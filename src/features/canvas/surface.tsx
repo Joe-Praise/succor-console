@@ -88,10 +88,10 @@ export interface SurfaceProps {
 export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNode, children }: SurfaceProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
-  const [offsets, setOffsets] = useState<NodeOffsets>({});
+  // The canvas only ever renders in the browser (the app shell waits for the session), and
+  // the page keys this component by project, so positions load once per mounted project.
+  const [offsets, setOffsets] = useState<NodeOffsets>(() => loadOffsets(projectId));
   const [ready, setReady] = useState(false);
-  const viewRef = useRef(view);
-  viewRef.current = view;
   const fittedFor = useRef<string | null>(null);
 
   const allNodes = useMemo(
@@ -106,12 +106,6 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
     const v = fitView(boundsOf(allNodes), { w: el.clientWidth, h: el.clientHeight });
     setView(v);
   }, [allNodes]);
-
-  // Stored positions load after mount so server and first client render match.
-  useEffect(() => {
-    setOffsets(loadOffsets(projectId));
-    fittedFor.current = null;
-  }, [projectId]);
 
   // Fit once per project when the graph first has content. Later data updates must not
   // yank the view out from under someone who has panned.
@@ -130,13 +124,14 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
   const zoomAt = useCallback((factor: number, cx?: number, cy?: number) => {
     const el = hostRef.current;
     if (!el) return;
-    const v = viewRef.current;
-    const k = Math.min(MAX_K, Math.max(MIN_K, v.k * factor));
     const px = cx ?? el.clientWidth / 2;
     const py = cy ?? el.clientHeight / 2;
-    const wx = (px - v.x) / v.k;
-    const wy = (py - v.y) / v.k;
-    setView({ k, x: px - wx * k, y: py - wy * k });
+    setView((v) => {
+      const k = Math.min(MAX_K, Math.max(MIN_K, v.k * factor));
+      const wx = (px - v.x) / v.k;
+      const wy = (py - v.y) / v.k;
+      return { k, x: px - wx * k, y: py - wy * k };
+    });
   }, []);
 
   // Wheel must be non-passive to stop the browser zooming the page on ctrl + scroll.
@@ -158,7 +153,7 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
 
   const drag = useRef<
     | { mode: "pan"; sx: number; sy: number; vx: number; vy: number; moved: boolean }
-    | { mode: "tile"; id: string; sx: number; sy: number; nx: number; ny: number; moved: boolean }
+    | { mode: "tile"; id: string; sx: number; sy: number; nx: number; ny: number; k: number; moved: boolean }
     | null
   >(null);
 
@@ -170,7 +165,7 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
     if (tile) {
       const node = byId.get(tile.dataset.nodeId!);
       if (!node) return;
-      drag.current = { mode: "tile", id: node.id, sx: e.clientX, sy: e.clientY, nx: node.x, ny: node.y, moved: false };
+      drag.current = { mode: "tile", id: node.id, sx: e.clientX, sy: e.clientY, nx: node.x, ny: node.y, k: view.k, moved: false };
     } else {
       drag.current = { mode: "pan", sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false };
     }
@@ -187,8 +182,7 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
     if (d.mode === "pan") {
       setView((v) => ({ ...v, x: d.vx + dx, y: d.vy + dy }));
     } else {
-      const k = viewRef.current.k;
-      setOffsets((o) => ({ ...o, [d.id]: { x: d.nx + dx / k, y: d.ny + dy / k } }));
+      setOffsets((o) => ({ ...o, [d.id]: { x: d.nx + dx / d.k, y: d.ny + dy / d.k } }));
     }
   }
 
@@ -198,7 +192,12 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
     if (!d) return;
     hostRef.current?.releasePointerCapture(e.pointerId);
     if (d.moved) {
-      if (d.mode === "tile") setOffsets((o) => (saveOffsets(projectId, o), o));
+      if (d.mode === "tile") {
+        // Compute from this event: the last move's state may not have rendered yet.
+        const next = { ...offsets, [d.id]: { x: d.nx + (e.clientX - d.sx) / d.k, y: d.ny + (e.clientY - d.sy) / d.k } };
+        setOffsets(next);
+        saveOffsets(projectId, next);
+      }
       return;
     }
     // A press that didn't move is a click: select the tile under it, or clear.
@@ -271,7 +270,7 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
       </div>
 
       {/* Zoom controls */}
-      <div data-canvas-ui className="absolute bottom-3 left-3 z-20 flex flex-col overflow-hidden tile">
+      <div data-canvas-ui className="absolute top-14 left-3 z-20 flex flex-col overflow-hidden tile">
         <ZoomButton label="Zoom in" onClick={() => zoomAt(1.2)}>
           <PlusIcon />
         </ZoomButton>

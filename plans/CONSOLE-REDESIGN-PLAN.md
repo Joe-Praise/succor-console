@@ -2,6 +2,16 @@
 
 Branch: `feat/console-redesign` (cut from `feat/control-plane`, which holds every page this restyles).
 
+## Status (2026-11-06)
+
+Phases 1 to 9 done on this branch, unmerged and unpushed. Verified with `tsc`, eslint, 94 vitest tests, `next build`, 64 routes scanned on the production build (desktop and phone) with no errors or overflow, and 32 real-browser interaction checks. All of that ran against a local mock of the API.
+
+**Still needed before merge:** a click-through against the real backend.
+
+**Deliberately not built:** drag-to-arrange dashboard widgets; editing style rules (no backend for it).
+
+**Found along the way, not fixed here (backend):** a 400 burns the requestId; `docs/INTEGRATION-GUIDE.md` in agent-service is stale.
+
 ## Why
 
 The control-plane work made the console correct but not sharp. The brief: match the level of

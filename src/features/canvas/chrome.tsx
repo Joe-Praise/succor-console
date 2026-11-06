@@ -226,7 +226,7 @@ export function GoLiveCard({ data, base, projectId, hasRuns }: { data: CanvasDat
   if (loading || done === steps.length) return null;
 
   return (
-    <div data-canvas-ui className="absolute bottom-3 left-14 z-20 w-72 max-w-[calc(100%-68px)] overflow-hidden tile">
+    <div data-canvas-ui className="absolute bottom-3 left-3 z-20 w-72 max-w-[calc(100%-24px)] overflow-hidden tile">
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}

@@ -249,7 +249,7 @@ export function boundsOf(rects: Rect[]): Rect {
  * The view a project opens on: fitted when that stays readable, otherwise a readable
  * zoom anchored on the left, where the request path starts.
  */
-export function openingView(bounds: Rect, viewport: { w: number; h: number }, minK = 0.74): { x: number; y: number; k: number } {
+export function openingView(bounds: Rect, viewport: { w: number; h: number }, minK = 0.68): { x: number; y: number; k: number } {
   const fitted = fitView(bounds, viewport);
   if (fitted.k >= minK) return fitted;
   return { k: minK, x: 72 - bounds.x * minK, y: Math.max(64, (viewport.h - bounds.h * minK) / 2) - bounds.y * minK };

@@ -316,7 +316,7 @@ function UsageExplorer() {
                 <span className="text-foreground">Failures:</span> a failed run is billed for the tokens it actually used.
               </li>
               <li>
-                <span className="text-foreground">Duplicates:</span> a replayed requestId starts nothing, so there's no new charge.
+                <span className="text-foreground">Duplicates:</span> a replayed requestId starts nothing and costs nothing.
               </li>
               <li>
                 <span className="text-foreground">Invoices:</span> monthly per project, itemized by agent, built from these same

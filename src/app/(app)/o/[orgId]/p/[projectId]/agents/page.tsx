@@ -13,15 +13,15 @@ import { useCatalog, useAgentRequests, useCreateAgentRequest } from "@/features/
 import { RoleGate } from "@/features/orgs/org-context";
 import { RequestTimeline } from "@/features/agents/request-timeline";
 import { CapabilityBadges } from "@/features/agents/capability-badges";
+import { categoryOf } from "@/features/canvas/tiles";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -130,8 +130,9 @@ export default function AgentsPage() {
     catalog.data?.catalog.filter((e) => category === "all" || e.category === category) ?? [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader
+        size="compact"
         title="Agents"
         description="Production agents, each with a typed request, a validated output and a callback contract. Enabled agents run on this project today."
         action={
@@ -147,8 +148,8 @@ export default function AgentsPage() {
       <Tabs value={category} onValueChange={(v) => setCategory(v as (typeof CATEGORIES)[number])}>
         <TabsList>
           {CATEGORIES.map((c) => (
-            <TabsTrigger key={c} value={c} className="capitalize">
-              {c === "elearning" ? "E-learning" : c}
+            <TabsTrigger key={c} value={c}>
+              {c === "all" ? "All" : categoryOf(c).label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -163,36 +164,31 @@ export default function AgentsPage() {
       ) : catalog.isError ? (
         <QueryError message="Couldn't load the catalog." onRetry={() => void catalog.refetch()} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {entries.map((e) => (
-            <Card
-              key={e.agentType}
-              className="relative flex h-full flex-col transition-colors hover:border-strong focus-within:border-strong"
-            >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {entries.map((e) => {
+            const Cat = categoryOf(e.category).icon;
+            return (
               <Link
+                key={e.agentType}
                 href={`/o/${orgId}/p/${projectId}/agents/${e.agentType}`}
-                aria-label={`Open ${e.name}`}
-                className="absolute inset-0 z-0 rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-              />
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{e.name}</CardTitle>
-                  {e.enabledForProject ? (
-                    <Badge className="shrink-0 bg-success-bg text-success">Enabled</Badge>
-                  ) : (
-                    <Badge variant="secondary" className="shrink-0">
-                      Not enabled
-                    </Badge>
-                  )}
+                className={cn("tile tile-link flex h-full flex-col p-3.5 outline-none focus-visible:border-brand", !e.enabledForProject && "bg-transparent")}
+              >
+                <div className="flex items-start gap-2">
+                  <Cat className={cn("mt-0.5 size-4 shrink-0", e.enabledForProject ? "text-brand" : "text-faint")} strokeWidth={1.75} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] leading-[18px] font-semibold text-foreground">{e.name}</p>
+                    <p className="truncate font-mono text-[11px] text-faint">{e.agentType}</p>
+                  </div>
+                  {e.enabledForProject ? <span className="mt-1 size-1.5 shrink-0 rounded-full bg-success" title="Enabled" aria-label="Enabled" /> : null}
                 </div>
-                <CardDescription className="font-mono text-xs">{e.agentType}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-between gap-3">
-                <p className="line-clamp-3 text-sm text-muted-foreground">{e.description}</p>
-                <CapabilityBadges entry={e} />
-              </CardContent>
-            </Card>
-          ))}
+                <p className="mt-2 line-clamp-3 flex-1 text-xs leading-relaxed text-muted-foreground">{e.description}</p>
+                <div className="mt-2.5 flex min-h-5 items-center justify-between gap-2">
+                  <CapabilityBadges entry={e} compact />
+                  {e.enabledForProject ? null : <span className="ml-auto text-[11px] text-faint">Not enabled</span>}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
       {!catalog.isLoading && !catalog.isError && entries.length === 0 ? (
@@ -200,7 +196,7 @@ export default function AgentsPage() {
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-faint">Your agent requests</h2>
+        <h2 className="kicker">Your agent requests</h2>
         {requests.isLoading ? (
           <Skeleton className="h-24 w-full rounded-xl" />
         ) : requests.isError ? (

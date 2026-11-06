@@ -21,8 +21,8 @@ export function joinUrl(base: string, path: string): string {
 
 /** The body to send: the agent's example, for this project. The server derives initiatedBy. */
 export function buildBody(entry: CatalogEntry, projectId: string, requestId = "run-001"): Record<string, unknown> {
-  const { projectId: _p, initiatedBy: _i, requestId: _r, ...rest } = entry.requestExample;
-  return { projectId, requestId, ...rest };
+  const rest = Object.entries(entry.requestExample).filter(([k]) => !["projectId", "initiatedBy", "requestId"].includes(k));
+  return { projectId, requestId, ...Object.fromEntries(rest) };
 }
 
 function jsonIndented(value: unknown, pad: string): string {

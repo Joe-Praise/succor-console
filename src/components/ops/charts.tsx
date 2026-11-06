@@ -84,7 +84,7 @@ export function StackedBars({
   return (
     <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} syncId={syncId} margin={{ top: 6, right: line ? 4 : 14, bottom: 0, left: 0 }}>
+        <ComposedChart data={data} syncId={syncId} margin={{ top: 6, right: line ? 4 : 20, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey={xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={16} />
           <YAxis
@@ -173,7 +173,7 @@ export function StepLines({
   return (
     <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} syncId={syncId} margin={{ top: 6, right: 14, bottom: 0, left: 0 }}>
+        <LineChart data={data} syncId={syncId} margin={{ top: 6, right: 20, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey={xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={24} />
           <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} domain={domain} tickFormatter={fmt} />

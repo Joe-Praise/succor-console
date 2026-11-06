@@ -64,7 +64,7 @@ export default function AdminOverviewPage() {
           {queues.map((q) => (
             <Card key={q.label}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">{q.label}</CardTitle>
+                <CardTitle>{q.label}</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 {q.count === null ? (

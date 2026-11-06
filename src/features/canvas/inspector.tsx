@@ -78,7 +78,7 @@ function DeliveryList({ projectId, base, label }: { projectId: string; base: str
   const callbacks = useCallbacks(projectId, 50);
   const rows = (callbacks.data?.deliveries ?? []).filter((d) => !label || d.envLabel === label).slice(0, 6);
   if (callbacks.isLoading) return <Skeleton className="h-24" />;
-  if (rows.length === 0) return <p className="text-[13px] text-muted-foreground">No delivery attempts recorded (they're kept for 30 days).</p>;
+  if (rows.length === 0) return <p className="text-[13px] text-muted-foreground">No delivery attempts recorded (they&apos;re kept for 30 days).</p>;
   return (
     <ul className="-mx-2">
       {rows.map((d) => {
@@ -108,7 +108,7 @@ function DeliveryList({ projectId, base, label }: { projectId: string; base: str
 
 function AgentPanel({ data, agentType, base, projectId }: { data: CanvasData; agentType: string; base: string; projectId: string }) {
   const entry = data.agents.find((a) => a.agentType === agentType);
-  if (!entry) return <p className="p-4 text-[13px] text-muted-foreground">This agent isn't enabled for the project.</p>;
+  if (!entry) return <p className="p-4 text-[13px] text-muted-foreground">This agent isn&apos;t enabled for the project.</p>;
   const stat = data.agentStats.get(agentType);
   const state = agentState(stat);
   const { method, path } = parseEndpoint(entry.endpoint);
