@@ -240,7 +240,7 @@ export function DeliveryTile({ data }: { data: CanvasData }) {
     <TileBody
       icon={<SendIcon className="size-4 text-muted-foreground" strokeWidth={1.75} />}
       title="Delivery"
-      sub="3 attempts · signed"
+      sub="up to 3 attempts"
       state={
         data.lost ? (
           <StateLine tone="error">{data.lost} undeliverable</StateLine>

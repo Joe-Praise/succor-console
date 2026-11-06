@@ -22,18 +22,51 @@ import { KpiCard } from "@/components/ops/primitives";
 
 type ProjectSpend = OrgBillingSummary["byProject"][number];
 
+/** The project's request path in miniature: live work moves, trouble shows at its station. */
+function MiniLine({ live, waiting, lost }: { live: number; waiting: number; lost: number }) {
+  const stations = [
+    { key: "in", tone: live ? "bg-info" : "bg-wire" },
+    { key: "work", tone: live ? "bg-info" : "bg-wire" },
+    { key: "hold", tone: waiting ? "bg-warning" : "bg-wire" },
+    { key: "out", tone: lost ? "bg-error" : "bg-wire" },
+  ];
+  return (
+    <div className="flex items-center" aria-hidden>
+      {stations.map((s, i) => (
+        <span key={s.key} className="flex flex-1 items-center last:flex-none">
+          <span className={cn("size-1.5 shrink-0 rounded-full", s.tone, s.tone === "bg-info" && "animate-pulse")} />
+          {i < stations.length - 1 ? (
+            <svg className="mx-0.5 h-1 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none">
+              <line
+                x1="0"
+                y1="1"
+                x2="100"
+                y2="1"
+                vectorEffect="non-scaling-stroke"
+                stroke={live ? "var(--info)" : "var(--wire)"}
+                strokeWidth="1"
+                className={live ? "signal-flow" : "signal-idle"}
+              />
+            </svg>
+          ) : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function HealthStat({ label, value, tone }: { label: string; value: string; tone?: "warning" | "error" | "info" }) {
   return (
-    <div>
-      <p className="text-[11px] text-faint">{label}</p>
+    <div className="min-w-0">
       <p
         className={cn(
-          "text-sm font-medium tabular-nums",
+          "text-[15px] leading-5 font-semibold tracking-tight tabular-nums",
           tone === "error" ? "text-error" : tone === "warning" ? "text-warning" : tone === "info" ? "text-info" : "text-foreground",
         )}
       >
         {value}
       </p>
+      <p className="truncate text-[11px] text-faint">{label}</p>
     </div>
   );
 }
@@ -60,11 +93,11 @@ function ProjectHealthCard({
   return (
     <Link
       href={`/o/${orgId}/p/${project.projectId}`}
-      className="flex h-full flex-col gap-4 tile p-4 transition-colors hover:border-strong focus-visible:outline-2 focus-visible:outline-brand"
+      className="tile tile-link flex h-full flex-col gap-3 p-3.5 outline-none focus-visible:border-brand"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">{project.name}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{project.name}</p>
           <p className="truncate font-mono text-[11px] text-faint">{project.projectId}</p>
         </div>
         <StatusBadge
@@ -73,10 +106,12 @@ function ProjectHealthCard({
       </div>
 
       {summary.isLoading ? (
-        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-14 w-full" />
       ) : summary.isError || !s ? (
         <p className="text-xs text-faint">Health unavailable for your role.</p>
       ) : (
+        <>
+        <MiniLine live={live} waiting={waiting} lost={lost} />
         <div className="grid grid-cols-4 gap-2">
           <HealthStat
             label="Success 7d"
@@ -91,10 +126,11 @@ function ProjectHealthCard({
             tone={lost ? "error" : waiting ? "warning" : undefined}
           />
         </div>
+        </>
       )}
 
       {spend ? (
-        <div className="mt-auto border-t border-border pt-3">
+        <div className="mt-auto border-t border-hairline pt-3">
           <BudgetMeter spent={spend.billedUsd} budget={spend.monthlyBudgetUsd} />
         </div>
       ) : null}
@@ -155,7 +191,7 @@ export default function OrgOverviewPage() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-faint">Projects</h2>
+        <h2 className="kicker">Projects</h2>
         {org.projects.length === 0 ? (
           <EmptyState
             icon={FolderKanbanIcon}
@@ -171,7 +207,7 @@ export default function OrgOverviewPage() {
             }
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {org.projects.map((p) => (
               <ProjectHealthCard
                 key={p.projectId}

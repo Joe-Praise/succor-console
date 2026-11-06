@@ -6,7 +6,7 @@ import { BRAND_NAME } from "@/lib/brand";
 import { PILLARS, GUARANTEES, ROADMAP } from "@/data/platform";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
-import { SectionHeading, CtaBand } from "@/components/marketing/section";
+import { SectionHeading, CtaBand, PageHero } from "@/components/marketing/section";
 import { ExecutionPreview } from "@/components/marketing/previews/execution-preview";
 import { UsagePreview } from "@/components/marketing/previews/usage-preview";
 import { ApprovalPreview } from "@/components/marketing/previews/approval-preview";
@@ -14,7 +14,7 @@ import { ApprovalPreview } from "@/components/marketing/previews/approval-previe
 export const metadata: Metadata = {
   title: `Platform — ${BRAND_NAME}`,
   description:
-    "Durable jobs, human approvals, multi-agent workflows, MCP tools, grounding, a signed audit ledger and hard budget caps — the engine under every agent.",
+    "Durable jobs, human approvals, multi-agent workflows, MCP tools, grounding, a signed audit ledger and budget caps — the engine under every agent.",
 };
 
 /** The request path, top to bottom, as it actually runs. */
@@ -126,20 +126,13 @@ function ArchitectureStack() {
 export default function PlatformPage() {
   return (
     <>
-      <section className="mx-auto max-w-6xl px-6 pt-20 pb-14 text-center md:pt-28">
-        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">The platform</p>
-        <h1
-          className="mx-auto mt-4 max-w-3xl font-serif text-foreground"
-          style={{ fontSize: "clamp(36px, 6vw, 60px)", lineHeight: 1.08, fontWeight: 500, letterSpacing: "-0.015em" }}
-        >
-          The engine under every agent.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          Agents are the part you see. Underneath is the part that makes them safe to put in a product:
-          durable jobs, human approvals, workflows, tool access, grounding, a signed audit trail and
-          budgets that actually stop spend.
-        </p>
-        <div className="mt-8 flex items-center justify-center gap-3">
+      <PageHero
+        eyebrow="The platform"
+        title="The engine under every agent"
+        lede="Agents are the part you see. Underneath is what makes them safe to put in a product: durable jobs, human approvals, workflows, tool access, grounding, a signed audit trail and budget caps."
+        tone="plum"
+      >
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
           <Button size="lg" render={<Link href="/register" />}>
             Start building
             <ArrowRightIcon />
@@ -148,9 +141,9 @@ export default function PlatformPage() {
             Browse the agents
           </Button>
         </div>
-      </section>
+      </PageHero>
 
-      <section className="border-t border-border bg-surface">
+      <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <Reveal>
             <SectionHeading
@@ -203,7 +196,7 @@ export default function PlatformPage() {
         </div>
       </section>
 
-      <section className="border-t border-border bg-surface">
+      <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <Reveal>
             <SectionHeading eyebrow="Capabilities" title="Ten things the engine does for you." />

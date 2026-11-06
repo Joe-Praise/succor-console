@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { MenuIcon, ArrowRightIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME, BRAND_TAGLINE } from "@/lib/brand";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -23,29 +24,21 @@ export function MarketingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
+    <header className="sticky top-0 z-40 bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-310 items-center gap-6 px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground">
-            <span className="font-mono text-sm font-semibold">
-              {BRAND_NAME.charAt(0).toLowerCase()}
-            </span>
-          </span>
-          <span className="font-mono text-sm tracking-wide text-foreground">
-            {BRAND_NAME.toLowerCase()}
-          </span>
+          <BrandMark size={24} />
+          <span className="text-[15px] font-semibold tracking-tight text-foreground">{BRAND_NAME}</span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-1 md:flex">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                pathname === l.href
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+                pathname === l.href || pathname.startsWith(`${l.href}/`) ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {l.label}
@@ -53,7 +46,7 @@ export function MarketingNav() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 md:ml-0">
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" render={<Link href="/login" />}>
             Sign in
           </Button>
@@ -65,20 +58,20 @@ export function MarketingNav() {
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="Open menu">
                   <MenuIcon />
                 </Button>
               }
             />
             <SheetContent side="right" className="w-64">
-              <SheetTitle className="px-1 pt-2">{BRAND_NAME.toLowerCase()}</SheetTitle>
-              <nav className="mt-4 flex flex-col gap-1">
+              <SheetTitle className="px-1 pt-2">{BRAND_NAME}</SheetTitle>
+              <nav className="mt-4 flex flex-col gap-0.5">
                 {LINKS.map((l) => (
                   <Link
                     key={l.href}
                     href={l.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-raised hover:text-foreground"
+                    className="rounded-md px-3 py-2 text-[13px] font-medium text-muted-foreground hover:bg-raised hover:text-foreground"
                   >
                     {l.label}
                   </Link>
@@ -86,7 +79,7 @@ export function MarketingNav() {
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-raised hover:text-foreground"
+                  className="rounded-md px-3 py-2 text-[13px] font-medium text-muted-foreground hover:bg-raised hover:text-foreground"
                 >
                   Sign in
                 </Link>
@@ -101,25 +94,18 @@ export function MarketingNav() {
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-10 text-sm text-muted-foreground sm:flex-row">
-        <p>
-          <span className="font-mono text-foreground">{BRAND_NAME.toLowerCase()}</span> — production
-          agents, workflows, and automation, metered and billed.
-        </p>
-        <nav className="flex items-center gap-5">
-          <Link href="/platform" className="hover:text-foreground">
-            Platform
-          </Link>
-          <Link href="/agents" className="hover:text-foreground">
-            Agents
-          </Link>
-          <Link href="/pricing" className="hover:text-foreground">
-            Pricing
-          </Link>
-          <Link href="/contact" className="hover:text-foreground">
-            Contact
-          </Link>
+    <footer className="mt-3">
+      <div className="mx-auto flex max-w-310 flex-col items-start justify-between gap-6 px-6 py-10 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-2.5">
+          <BrandMark size={20} />
+          <p className="text-xs text-muted-foreground">{BRAND_TAGLINE}</p>
+        </div>
+        <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="hover:text-foreground">
+              {l.label}
+            </Link>
+          ))}
           <Link href="/login" className="hover:text-foreground">
             Sign in
           </Link>

@@ -50,7 +50,7 @@ Content-Type: application/json
 { "projectId": "your-project", "requestId": "unique-per-call", ... }
 
 → 202 Accepted  { "jobId": "…" }
-   // a durable job runs it, then delivers the signed result to your callback
+   // a durable job runs it, then delivers the result to your callback
    // (or poll GET /agents/jobs/:jobId)`;
 
   return (
@@ -63,20 +63,10 @@ Content-Type: application/json
           <ArrowLeftIcon className="size-4" />
           All agents
         </Link>
-        <p className="mt-6 font-mono text-xs tracking-[0.2em] text-brand uppercase">
+        <p className="kicker mt-6 text-brand!">
           {CATEGORY_META[agent.category].label}
         </p>
-        <h1
-          className="mt-3 font-serif text-foreground"
-          style={{
-            fontSize: "clamp(32px, 5.5vw, 52px)",
-            lineHeight: 1.1,
-            fontWeight: 500,
-            letterSpacing: "-0.015em",
-          }}
-        >
-          {agent.name}
-        </h1>
+        <h1 className="display mt-3 text-[clamp(32px,5.5vw,52px)] text-foreground">{agent.name}</h1>
         <div className="mt-4 flex items-center gap-3">
           <span className="font-mono text-xs text-faint">{agent.agentType}</span>
           <Badge variant="secondary" className="font-mono text-[10px]">

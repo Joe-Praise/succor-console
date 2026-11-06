@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/marketing/reveal";
-import { SectionHeading, CtaBand } from "@/components/marketing/section";
+import { PageHero, SectionHeading, CtaBand } from "@/components/marketing/section";
 
 export const metadata: Metadata = {
   title: `Agents — ${BRAND_NAME}`,
@@ -24,25 +24,12 @@ const ORDER: MarketingCategory[] = ["seo", "elearning", "analysis", "content", "
 export default function AgentsPage() {
   return (
     <>
-      <section className="mx-auto max-w-4xl px-6 pt-20 pb-6 text-center md:pt-28">
-        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">The agent library</p>
-        <h1
-          className="mt-4 font-serif text-foreground"
-          style={{
-            fontSize: "clamp(34px, 6vw, 56px)",
-            lineHeight: 1.1,
-            fontWeight: 500,
-            letterSpacing: "-0.015em",
-          }}
-        >
-          One integration. Every agent.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          Each one is code we wrote, hardened, and operate — schema-enforced output, guardrails,
-          and a callback contract your app relies on. One integration covers every agent, and the
-          library keeps growing.
-        </p>
-      </section>
+      <PageHero
+        eyebrow="The agent library"
+        title="One integration. Every agent."
+        lede="Each one is code we wrote, hardened and operate: schema-enforced output, guardrails, and a callback contract your app relies on. One integration covers them all, and the library keeps growing."
+        tone="rust"
+      />
 
       {ORDER.map((cat) => (
         <section key={cat} className="mx-auto max-w-6xl px-6 py-12">

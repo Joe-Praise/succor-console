@@ -94,8 +94,8 @@ const RIDGES = RIDGE_SPEC.map((r) => ridgePoints(r.y, r.amp, r.seed));
 const STARS = Array.from({ length: 150 }, (_, i) => ({
   x: +(noise(i, 11) * W).toFixed(1),
   y: +(noise(i, 23) * 460).toFixed(1),
-  r: +(0.5 + noise(i, 37) * 1.1).toFixed(2),
-  o: +(0.25 + noise(i, 41) * 0.65).toFixed(2),
+  r: +(0.35 + noise(i, 37) * 0.75).toFixed(2),
+  o: +(0.2 + noise(i, 41) * 0.6).toFixed(2),
   d: +(2 + noise(i, 53) * 5).toFixed(2),
   twinkle: i % 6 === 0,
 }));
@@ -103,8 +103,8 @@ const CLOUDS = Array.from({ length: 9 }, (_, i) => ({
   x: +(noise(i, 61) * W).toFixed(0),
   y: +(330 + noise(i, 67) * 190).toFixed(0),
   w: +(240 + noise(i, 71) * 420).toFixed(0),
-  h: +(6 + noise(i, 73) * 11).toFixed(1),
-  o: +(0.1 + noise(i, 79) * 0.26).toFixed(2),
+  h: +(3 + noise(i, 73) * 6).toFixed(1),
+  o: +(0.06 + noise(i, 79) * 0.16).toFixed(2),
 }));
 
 /** Tower positions along the second ridge: the stations the signal relays through. */
@@ -182,7 +182,7 @@ export function NightRidge({
             </linearGradient>
           ))}
           <filter id={`${id}-soft`} x="-20%" y="-200%" width="140%" height="500%">
-            <feGaussianBlur stdDeviation="3" />
+            <feGaussianBlur stdDeviation="4" />
           </filter>
         </defs>
 

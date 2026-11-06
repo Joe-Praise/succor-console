@@ -4,7 +4,7 @@ import { MailIcon, SparklesIcon, WalletIcon } from "lucide-react";
 import { BRAND_NAME, BRAND_CONTACT_EMAIL } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
-import { SectionHeading } from "@/components/marketing/section";
+import { PageHero, SectionHeading } from "@/components/marketing/section";
 
 export const metadata: Metadata = {
   title: `Contact — ${BRAND_NAME}`,
@@ -32,30 +32,19 @@ const REASONS = [
 export default function ContactPage() {
   return (
     <>
-      <section className="mx-auto max-w-4xl px-6 pt-20 pb-10 text-center md:pt-28">
-        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">Contact</p>
-        <h1
-          className="mt-4 font-serif text-foreground"
-          style={{
-            fontSize: "clamp(34px, 6vw, 56px)",
-            lineHeight: 1.1,
-            fontWeight: 500,
-            letterSpacing: "-0.015em",
-          }}
-        >
-          Talk to a human.
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-          We read everything. Include your use case and rough volume, and you&apos;ll get a
-          useful answer — not a ticket number.
-        </p>
-        <div className="mt-8">
+      <PageHero
+        eyebrow="Contact"
+        title="Talk to a human"
+        lede="We read everything. Include your use case and rough volume, and you'll get a useful answer, not a ticket number."
+        tone="steel"
+      >
+        
           <Button size="lg" render={<a href={`mailto:${BRAND_CONTACT_EMAIL}`} />}>
             <MailIcon />
             {BRAND_CONTACT_EMAIL}
           </Button>
-        </div>
-      </section>
+        
+      </PageHero>
 
       <section className="mx-auto max-w-6xl px-6 py-14">
         <div className="grid gap-6 md:grid-cols-3">
