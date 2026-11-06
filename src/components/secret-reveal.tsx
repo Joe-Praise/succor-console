@@ -85,7 +85,7 @@ export function SecretReveal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2.5">
+        <div className="flex items-start gap-2 tile px-3 py-2.5">
           <code
             className={cn(
               "min-w-0 flex-1 font-mono text-sm leading-relaxed break-all",

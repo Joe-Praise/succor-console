@@ -59,7 +59,7 @@ export default function AgentsPage() {
               <Reveal key={a.agentType} delay={i * 0.04}>
                 <Link
                   href={`/agents/${a.agentType}`}
-                  className="flex h-full flex-col rounded-xl border border-border bg-surface p-5 transition-colors hover:border-strong"
+                  className="flex h-full flex-col tile p-5 transition-colors hover:border-strong"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium text-foreground">{a.name}</h3>

@@ -61,7 +61,7 @@ export default function ContactPage() {
         <div className="grid gap-6 md:grid-cols-3">
           {REASONS.map((r, i) => (
             <Reveal key={r.title} delay={i * 0.06}>
-              <div className="h-full rounded-xl border border-border bg-surface p-6">
+              <div className="h-full tile p-6">
                 <r.icon className="size-5 text-brand" aria-hidden />
                 <h3 className="mt-3 font-medium text-foreground">{r.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{r.body}</p>

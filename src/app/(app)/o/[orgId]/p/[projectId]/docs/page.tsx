@@ -297,7 +297,7 @@ export default function DocsPage() {
       {/* The contract in one line */}
       <ol className="grid gap-2 sm:grid-cols-5">
         {FLOW.map((f, i) => (
-          <li key={f.t} className="relative rounded-xl border border-border bg-surface px-3 py-3">
+          <li key={f.t} className="relative tile px-3 py-3">
             <p className="font-mono text-[11px] text-brand">{String(i + 1).padStart(2, "0")}</p>
             <p className="mt-1 font-mono text-xs text-foreground">{f.t}</p>
             <p className="text-xs text-muted-foreground">{f.d}</p>

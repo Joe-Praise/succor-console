@@ -81,7 +81,6 @@ function RunsExplorer() {
     <div className="space-y-5">
       <PageHeader
         size="compact"
-        eyebrow="Operate"
         title="Runs"
         description="Every agent call is a durable job. Open one to see its timeline, output, cost and delivery."
       />

@@ -36,21 +36,21 @@ export default function AgentRequestPage() {
       ]}
     >
       <Section title="Progress">
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           <RequestTimeline status={r.status ?? "pending"} />
         </div>
       </Section>
       <Section title="What it should do">
-        <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-foreground">{r.description}</p>
+        <p className="tile p-4 text-sm whitespace-pre-wrap text-foreground">{r.description}</p>
       </Section>
       <div className="grid gap-4 md:grid-cols-2">
         <Section title="Inputs you can provide">
-          <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-muted-foreground">
+          <p className="tile p-4 text-sm whitespace-pre-wrap text-muted-foreground">
             {r.desiredInputs || "—"}
           </p>
         </Section>
         <Section title="Callback you expect">
-          <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-muted-foreground">
+          <p className="tile p-4 text-sm whitespace-pre-wrap text-muted-foreground">
             {r.desiredCallback || "—"}
           </p>
         </Section>

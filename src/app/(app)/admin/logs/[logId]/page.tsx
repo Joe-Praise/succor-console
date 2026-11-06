@@ -38,7 +38,7 @@ export default function AdminLogPage() {
         { label: "Initiated by", value: <span className="font-mono text-xs">{l.initiatedBy ?? "—"}</span> },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Related</p>
           <Link href={`/admin/projects/${l.projectId}`} className="block text-brand hover:underline">
             Project {l.projectId}
@@ -62,7 +62,7 @@ export default function AdminLogPage() {
             ["Markup", l.markupMultiplier ? `× ${l.markupMultiplier}` : "—"],
             ["Billed", usdPrecise(l.billedUsd)],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-border bg-surface p-4">
+            <div key={label} className="tile p-4">
               <p className="text-xs text-faint">{label}</p>
               <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
             </div>

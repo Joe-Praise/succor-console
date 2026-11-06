@@ -271,7 +271,7 @@ export function CanvasSurface({ projectId, graph, selectedId, onSelect, renderNo
       </div>
 
       {/* Zoom controls */}
-      <div data-canvas-ui className="absolute bottom-3 left-3 z-20 flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
+      <div data-canvas-ui className="absolute bottom-3 left-3 z-20 flex flex-col overflow-hidden tile">
         <ZoomButton label="Zoom in" onClick={() => zoomAt(1.2)}>
           <PlusIcon />
         </ZoomButton>

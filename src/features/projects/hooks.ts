@@ -145,11 +145,18 @@ export function useCreateAgentRequest(projectId: string) {
   });
 }
 
-export function useCallbacks(projectId: string, limit = 50, ok?: boolean, agentType?: string) {
+export function useCallbacks(
+  projectId: string,
+  limit = 50,
+  ok?: boolean,
+  agentType?: string,
+  opts: { tailMs?: number } = {},
+) {
   return useQuery({
     queryKey: [...callbacksKey(projectId), limit, ok ?? "all", agentType ?? "any"],
     queryFn: () => projectsApi.listCallbacks(projectId, limit, ok, agentType),
     enabled: !!projectId,
+    refetchInterval: opts.tailMs ?? false,
   });
 }
 

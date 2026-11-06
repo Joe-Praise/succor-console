@@ -37,11 +37,11 @@ export function UsagePreview({ className }: { className?: string }) {
           <KpiCard label="Failure rate" value={percent(t.failed / t.runs)} sub="from recorded outcomes" />
         </div>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <div className="rounded-xl border border-border bg-surface p-3">
+          <div className="tile p-3">
             <p className="mb-2 text-xs font-semibold text-muted-foreground">Spend (billed) per day</p>
             <StackedBars data={s.data} xKey="label" series={s.series} height={180} valueFormatter={(v) => usd(v)} />
           </div>
-          <div className="rounded-xl border border-border bg-surface p-3">
+          <div className="tile p-3">
             <LegendTable rows={s.legend} formatter={(v) => usd(v)} />
           </div>
         </div>

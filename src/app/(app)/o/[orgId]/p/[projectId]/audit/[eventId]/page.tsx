@@ -49,7 +49,7 @@ export default function AuditEventPage() {
         { label: "Category", value: e.category ?? "—" },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <FingerprintIcon className="size-4 text-brand" />
           <p className="font-medium text-foreground">Signed at write</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
@@ -67,7 +67,7 @@ export default function AuditEventPage() {
       </Section>
 
       <Section title="Target" description="The record this action was taken on.">
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="flex flex-wrap items-center gap-3 tile p-4 text-sm">
           <span className="text-muted-foreground">{e.targetType}</span>
           {e.targetId ? <IdChip id={e.targetId} full /> : null}
           {targetHref ? (
@@ -80,7 +80,7 @@ export default function AuditEventPage() {
 
       {e.counts || e.noteLength != null ? (
         <Section title="Details">
-          <dl className="grid gap-3 rounded-xl border border-border bg-surface p-4 text-sm sm:grid-cols-3">
+          <dl className="grid gap-3 tile p-4 text-sm sm:grid-cols-3">
             {e.counts
               ? Object.entries(e.counts).map(([k, v]) => (
                   <div key={k}>

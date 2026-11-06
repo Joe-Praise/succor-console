@@ -62,7 +62,7 @@ export default function CallbackDeliveryPage() {
         { label: "Duration", value: duration(d.durationMs) },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Related</p>
           <Link href={`${base}/callbacks?agent=${d.agentType}`} className="block text-brand hover:underline">
             Other deliveries for this agent
@@ -102,7 +102,7 @@ Content-Type: application/json`}
       </Section>
 
       <Section title="Response">
-        <div className="rounded-xl border border-border bg-surface p-4 font-mono text-sm">
+        <div className="tile p-4 font-mono text-sm">
           <p>
             <span className="text-faint">status </span>
             <span className={d.ok ? "text-success" : "text-error"}>{d.responseStatus ?? "no response"}</span>

@@ -54,7 +54,7 @@ export default function AdminRequestsPage() {
       ) : (
         <div className="space-y-3">
           {rows.map((r, i) => (
-            <div key={r._id ?? i} className="rounded-xl border border-border bg-surface p-4">
+            <div key={r._id ?? i} className="tile p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <Link href={`/admin/requests/${r._id}`} className="text-sm font-medium text-foreground hover:text-brand">

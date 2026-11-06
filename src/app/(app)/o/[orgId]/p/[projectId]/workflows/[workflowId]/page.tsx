@@ -108,14 +108,14 @@ export default function WorkflowDetailPage() {
       ]}
       aside={
         <>
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="tile p-4">
             <p className="text-sm font-medium text-foreground">Why it can&apos;t double-spend</p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               Each step&apos;s jobs are enqueued with a deterministic request id per (workflow, step, attempt, index). A
               resumed advancer finds the job that already exists instead of spawning a second one.
             </p>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="tile p-4">
             <p className="text-sm font-medium text-foreground">Why it survives a crash</p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               One advancer holds a 30-second lease on this run and every state write is fenced by it. If that process
@@ -123,7 +123,7 @@ export default function WorkflowDetailPage() {
             </p>
           </div>
           {template ? (
-            <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="tile p-4">
               <p className="text-sm font-medium text-foreground">Step notes</p>
               <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
                 {template.steps.map((s) => (
@@ -167,7 +167,7 @@ export default function WorkflowDetailPage() {
           </Link>
         }
       >
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           {runs.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading jobs…</p>
           ) : (

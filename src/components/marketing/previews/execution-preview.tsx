@@ -58,11 +58,11 @@ export function ExecutionPreview({ className }: { className?: string }) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-          <div className="rounded-xl border border-border bg-surface p-3">
+          <div className="tile p-3">
             <p className="mb-2 text-xs font-semibold text-muted-foreground">Timeline · recorded events only</p>
             <EventWaterfall events={events} selectedKey={selected.key} onSelect={noop} />
           </div>
-          <div className="space-y-2 rounded-xl border border-border bg-surface p-3 text-xs">
+          <div className="space-y-2 tile p-3 text-xs">
             <p className="font-semibold text-muted-foreground">Selected event</p>
             <p className="text-sm font-medium text-foreground">{selected.title}</p>
             {selected.detail ? <p className="font-mono text-[11px] text-muted-foreground">{selected.detail}</p> : null}

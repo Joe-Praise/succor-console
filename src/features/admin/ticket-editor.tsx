@@ -30,7 +30,7 @@ export function TicketEditor({ ticket, linkToDetail = false }: { ticket: Support
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="tile p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           {linkToDetail ? (

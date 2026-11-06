@@ -245,7 +245,7 @@ export default function LandingPage() {
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {STEPS.map((s, i) => (
             <Reveal key={s.n} delay={i * 0.08}>
-              <div className="flex h-full flex-col rounded-xl border border-border bg-surface p-6">
+              <div className="flex h-full flex-col tile p-6">
                 <p className="font-mono text-xs text-brand">{s.n}</p>
                 <h3 className="mt-2 font-medium text-foreground">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
@@ -306,7 +306,7 @@ export default function LandingPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {DIFFERENTIATORS.map((d, i) => (
             <Reveal key={d.title} delay={i * 0.05}>
-              <div className="h-full rounded-xl border border-border bg-surface p-6">
+              <div className="h-full tile p-6">
                 <d.icon className="size-5 text-brand" aria-hidden />
                 <h3 className="mt-3 font-medium text-foreground">{d.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.body}</p>

@@ -95,19 +95,19 @@ export default function AdminRequestPage() {
       ]}
     >
       <Section title="Pipeline">
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           <RequestTimeline status={r.status ?? "pending"} />
         </div>
       </Section>
       <Section title="What it should do">
-        <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap">{r.description}</p>
+        <p className="tile p-4 text-sm whitespace-pre-wrap">{r.description}</p>
       </Section>
       <div className="grid gap-4 md:grid-cols-2">
         <Section title="Inputs they can provide">
-          <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-muted-foreground">{r.desiredInputs || "—"}</p>
+          <p className="tile p-4 text-sm whitespace-pre-wrap text-muted-foreground">{r.desiredInputs || "—"}</p>
         </Section>
         <Section title="Callback they expect">
-          <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-muted-foreground">{r.desiredCallback || "—"}</p>
+          <p className="tile p-4 text-sm whitespace-pre-wrap text-muted-foreground">{r.desiredCallback || "—"}</p>
         </Section>
       </div>
       <Section title="Status & notes" description="The requester sees the status timeline and your notes.">

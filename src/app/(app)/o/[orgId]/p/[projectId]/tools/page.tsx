@@ -260,7 +260,7 @@ function ServersSection() {
           {rows.map((s) => (
             <div
               key={s.id}
-              className="relative rounded-xl border border-border bg-surface p-4 transition-colors hover:border-strong focus-within:border-strong"
+              className="relative tile p-4 transition-colors hover:border-strong focus-within:border-strong"
             >
               <Link
                 href={`/o/${orgId}/p/${projectId}/tools/servers/${s.id}`}

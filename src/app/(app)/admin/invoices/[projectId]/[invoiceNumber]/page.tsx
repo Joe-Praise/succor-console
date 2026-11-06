@@ -37,7 +37,7 @@ export default function AdminInvoicePage() {
         { label: "Payment reference", value: inv.paymentReference ? <span className="font-mono text-xs">{inv.paymentReference}</span> : "—" },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Trail</p>
           <dl className="space-y-1.5 text-xs">
             <div className="flex justify-between gap-3"><dt className="text-faint">Generated</dt><dd>{dateTime(inv.generatedAt)}</dd></div>

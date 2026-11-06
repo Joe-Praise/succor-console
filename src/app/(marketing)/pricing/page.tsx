@@ -129,7 +129,7 @@ export default function PricingPage() {
           />
         </Reveal>
         <Reveal className="mx-auto mt-10 max-w-2xl" delay={0.08}>
-          <ul className="grid gap-3 rounded-xl border border-border bg-surface p-6 sm:grid-cols-2">
+          <ul className="grid gap-3 tile p-6 sm:grid-cols-2">
             {INCLUDED.map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                 <CheckIcon className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />

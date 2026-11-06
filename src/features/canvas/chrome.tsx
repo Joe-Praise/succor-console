@@ -64,7 +64,7 @@ export function HealthStrip({
   const live = s ? (s.live["queued"] ?? 0) + (s.live["running"] ?? 0) : 0;
   const lost = s ? undeliverable(s.deliveries) : 0;
   return (
-    <div data-canvas-ui className="flex max-w-full items-stretch divide-x divide-hairline overflow-x-auto rounded-lg border border-border bg-surface no-scrollbar">
+    <div data-canvas-ui className="flex max-w-full items-stretch divide-x divide-hairline overflow-x-auto tile no-scrollbar">
       <div role="radiogroup" aria-label="Time range" className="flex items-center gap-0.5 px-1">
         {RANGE_PRESETS.filter((p) => p.key !== "90d").map((p) => (
           <button
@@ -162,7 +162,7 @@ export function ActivityDock({ data, base, projectId, shifted }: { data: CanvasD
     <div
       data-canvas-ui
       className={cn(
-        "absolute bottom-3 z-20 w-[min(340px,calc(100%-64px))] overflow-hidden rounded-lg border border-border bg-surface transition-[right] duration-200",
+        "absolute bottom-3 z-20 w-[min(340px,calc(100%-64px))] overflow-hidden tile transition-[right] duration-200",
         shifted ? "right-3 lg:right-[436px]" : "right-3",
       )}
     >
@@ -226,7 +226,7 @@ export function GoLiveCard({ data, base, projectId, hasRuns }: { data: CanvasDat
   if (loading || done === steps.length) return null;
 
   return (
-    <div data-canvas-ui className="absolute bottom-3 left-14 z-20 w-72 max-w-[calc(100%-68px)] overflow-hidden rounded-lg border border-border bg-surface">
+    <div data-canvas-ui className="absolute bottom-3 left-14 z-20 w-72 max-w-[calc(100%-68px)] overflow-hidden tile">
       <button
         type="button"
         onClick={() => setCollapsed((v) => !v)}

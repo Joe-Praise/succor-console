@@ -11,6 +11,7 @@ import {
   Tooltip,
   Line,
   ComposedChart,
+  LineChart,
   PieChart,
   Pie,
   Cell,
@@ -34,20 +35,21 @@ export const SERIES_COLORS = [
 ];
 export const OTHERS_COLOR = "var(--text-tertiary)";
 
-const axisTick = { fill: "var(--chart-axis)", fontSize: 11 };
+const axisTick = { fill: "var(--chart-axis)", fontSize: 10.5, fontFamily: "var(--font-geist-mono)" };
 
 export const tooltipStyle = {
   contentStyle: {
     background: "var(--overlay)",
     border: "1px solid var(--border)",
-    borderRadius: 10,
-    fontSize: 12,
+    borderRadius: 6,
+    padding: "6px 9px",
+    fontSize: 11.5,
     color: "var(--foreground)",
     boxShadow: "var(--shadow-md)",
   },
   labelStyle: { color: "var(--text-secondary)", marginBottom: 4 },
   itemStyle: { color: "var(--foreground)", padding: 0 },
-  cursor: { fill: "var(--raised)", opacity: 0.6 },
+  cursor: { fill: "var(--foreground)", opacity: 0.05 },
 } as const;
 
 export interface SeriesDef {
@@ -65,6 +67,7 @@ export function StackedBars({
   valueFormatter,
   line,
   className,
+  syncId,
 }: {
   data: Array<Record<string, string | number | null>>;
   xKey: string;
@@ -74,20 +77,22 @@ export function StackedBars({
   /** Optional overlay line on a right axis (e.g. average duration). */
   line?: { key: string; label: string; formatter?: (v: number) => string };
   className?: string;
+  /** Charts sharing an id share a crosshair. */
+  syncId?: string;
 }) {
   const fmt = (v: unknown) => (typeof v === "number" ? (valueFormatter ? valueFormatter(v) : v.toLocaleString()) : String(v));
   return (
     <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 6, right: line ? 4 : 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
+        <ComposedChart data={data} syncId={syncId} margin={{ top: 6, right: line ? 4 : 14, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey={xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={16} />
           <YAxis
             yAxisId="v"
             tick={axisTick}
             tickLine={false}
             axisLine={false}
-            width={52}
+            width={44}
             tickFormatter={(v: number) => (valueFormatter ? valueFormatter(v) : v.toLocaleString())}
           />
           {line ? (
@@ -117,8 +122,8 @@ export function StackedBars({
               name={s.label}
               stackId="a"
               fill={s.color}
-              radius={i === series.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
-              maxBarSize={28}
+              radius={i === series.length - 1 ? [1, 1, 0, 0] : [0, 0, 0, 0]}
+              maxBarSize={18}
               isAnimationActive={false}
             />
           ))}
@@ -136,6 +141,61 @@ export function StackedBars({
             />
           ) : null}
         </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/**
+ * Thin stepped lines: the shape a metric actually has. Days with no value stay gaps
+ * rather than being drawn through, so a missing day never looks like a real zero.
+ */
+export function StepLines({
+  data,
+  xKey,
+  series,
+  height = 170,
+  valueFormatter,
+  syncId,
+  domain,
+  className,
+}: {
+  data: Array<Record<string, string | number | null>>;
+  xKey: string;
+  series: SeriesDef[];
+  height?: number;
+  valueFormatter?: (v: number) => string;
+  syncId?: string;
+  domain?: [number | "auto", number | "auto"];
+  className?: string;
+}) {
+  const fmt = (v: number) => (valueFormatter ? valueFormatter(v) : v.toLocaleString());
+  return (
+    <div className={cn("w-full", className)} style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} syncId={syncId} margin={{ top: 6, right: 14, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
+          <XAxis dataKey={xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={24} />
+          <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} domain={domain} tickFormatter={fmt} />
+          <Tooltip
+            {...tooltipStyle}
+            cursor={{ stroke: "var(--border-strong)", strokeDasharray: "3 3" }}
+            formatter={(value, name) => [fmt(typeof value === "number" ? value : Number(value)), name]}
+          />
+          {series.map((s) => (
+            <Line
+              key={s.key}
+              type="stepAfter"
+              dataKey={s.key}
+              name={s.label}
+              stroke={s.color}
+              strokeWidth={1.25}
+              dot={false}
+              activeDot={{ r: 2.5, strokeWidth: 0 }}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
@@ -159,7 +219,7 @@ export function SimpleBars({
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
+          <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey={xKey} tick={axisTick} tickLine={false} axisLine={false} minTickGap={16} />
           <YAxis
             tick={axisTick}
@@ -172,7 +232,7 @@ export function SimpleBars({
             {...tooltipStyle}
             formatter={(v) => (typeof v === "number" && valueFormatter ? valueFormatter(v) : String(v))}
           />
-          <Bar dataKey={yKey} fill="var(--chart-1)" radius={[3, 3, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+          <Bar dataKey={yKey} fill="var(--chart-1)" radius={[1, 1, 0, 0]} maxBarSize={18} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>

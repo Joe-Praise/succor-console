@@ -112,7 +112,7 @@ function ArchitectureStack() {
       </ol>
       <div className="space-y-3">
         {SIDECARS.map((s) => (
-          <div key={s.title} className="rounded-xl border border-border bg-surface p-4">
+          <div key={s.title} className="tile p-4">
             <p className="font-mono text-[10px] tracking-[0.18em] text-brand uppercase">alongside</p>
             <p className="mt-1 text-sm font-medium text-foreground">{s.title}</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{s.body}</p>
@@ -244,7 +244,7 @@ export default function PlatformPage() {
             />
           </Reveal>
           <Reveal className="mt-12" delay={0.06}>
-            <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+            <div className="overflow-x-auto tile">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-faint">
                   <tr>

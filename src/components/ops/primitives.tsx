@@ -403,3 +403,130 @@ export function CursorPager({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// HTTP vocabulary: the same method and status marks wherever a request is shown.
+// ---------------------------------------------------------------------------
+
+const METHOD_TONE: Record<string, string> = {
+  GET: "text-info",
+  POST: "text-success",
+  PUT: "text-chart-3",
+  PATCH: "text-chart-5",
+  DELETE: "text-error",
+};
+
+export function MethodMark({ method, className }: { method: string; className?: string }) {
+  return (
+    <span className={cn("inline-block w-11 shrink-0 font-mono text-[11px] font-medium", METHOD_TONE[method] ?? "text-muted-foreground", className)}>
+      {method}
+    </span>
+  );
+}
+
+export function HttpStatus({ status, ok, className }: { status: number | null | undefined; ok?: boolean; className?: string }) {
+  const good = ok ?? (status != null && status >= 200 && status < 300);
+  const warn = !good && (status == null || status === 429 || status >= 500);
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[18px] items-center rounded-[3px] px-1 font-mono text-[11px] font-medium tabular-nums",
+        good ? "bg-success-bg text-success" : warn ? "bg-warning-bg text-warning" : "bg-error-bg text-error",
+        className,
+      )}
+    >
+      {status ?? "no response"}
+    </span>
+  );
+}
+
+/** A row of numbers in one tile, divided by hairlines. Denser than a row of cards. */
+export function StatBand({
+  stats,
+  className,
+}: {
+  stats: Array<{ label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: Tone; href?: string; hint?: string }>;
+  className?: string;
+}) {
+  return (
+    <div className={cn("tile grid overflow-hidden sm:grid-flow-col sm:auto-cols-fr", className)}>
+      {stats.map((s) => {
+        const inner = (
+          <>
+            <p className="truncate text-[11px] text-faint" title={s.hint}>
+              {s.label}
+            </p>
+            <p
+              className={cn(
+                "mt-0.5 truncate text-[17px] leading-6 font-semibold tracking-tight tabular-nums",
+                s.tone ? TONE_ICON[s.tone] : "text-foreground",
+              )}
+            >
+              {s.value}
+            </p>
+            {s.sub ? <p className="truncate text-[11px] text-faint">{s.sub}</p> : null}
+          </>
+        );
+        const cls = "block min-w-0 border-b border-hairline px-3 py-2.5 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0";
+        return s.href ? (
+          <Link key={s.label} href={s.href} className={cn(cls, "transition-colors hover:bg-raised")}>
+            {inner}
+          </Link>
+        ) : (
+          <div key={s.label} className={cls}>
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A titled dashboard panel: the one frame every chart and feed sits in. */
+export function Widget({
+  title,
+  hint,
+  href,
+  action,
+  className,
+  bodyClassName,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  href?: string;
+  action?: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={cn("tile flex min-w-0 flex-col", className)}>
+      <header className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-hairline px-3">
+        <h3 className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-foreground">
+          {href ? (
+            <Link href={href} className="truncate hover:text-brand">
+              {title}
+            </Link>
+          ) : (
+            <span className="truncate">{title}</span>
+          )}
+          {hint ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span tabIndex={0} className="grid size-3.5 cursor-help place-items-center text-faint hover:text-foreground" aria-label={`About ${title}`}>
+                    <InfoIcon className="size-3" />
+                  </span>
+                }
+              />
+              <TooltipContent className="max-w-64">{hint}</TooltipContent>
+            </Tooltip>
+          ) : null}
+        </h3>
+        {action}
+      </header>
+      <div className={cn("min-h-0 flex-1 p-3", bodyClassName)}>{children}</div>
+    </section>
+  );
+}

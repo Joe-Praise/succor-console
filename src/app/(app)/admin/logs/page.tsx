@@ -25,7 +25,6 @@ function AdminLogsInner() {
     <div className="space-y-5">
       <PageHeader
         size="compact"
-        eyebrow="Admin"
         title="Run feed"
         description="Cross-tenant priced runs, newest first (refreshes every 10 seconds)."
       />

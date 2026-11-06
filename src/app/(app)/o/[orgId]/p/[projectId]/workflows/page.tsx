@@ -175,7 +175,7 @@ export default function WorkflowsPage() {
         <h2 className="text-sm font-medium text-faint">Available pipelines</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           {WORKFLOW_TEMPLATES.map((t) => (
-            <div key={t.workflowType} className="flex flex-col rounded-xl border border-border bg-surface p-5">
+            <div key={t.workflowType} className="flex flex-col tile p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium text-foreground">{t.name}</p>
@@ -248,7 +248,7 @@ export default function WorkflowsPage() {
               <Link
                 key={wf.id}
                 href={`${base}/workflows/${wf.id}`}
-                className="block rounded-xl border border-border bg-surface px-4 py-3 transition-colors hover:border-strong"
+                className="block tile px-4 py-3 transition-colors hover:border-strong"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">

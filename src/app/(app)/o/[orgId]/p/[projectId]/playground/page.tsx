@@ -182,7 +182,7 @@ function Playground() {
           { icon: ShieldIcon, t: "No tools, no side effects", d: "MCP tools only run inside durable jobs." },
           { icon: ReceiptTextIcon, t: "Metered like production", d: "Same budget cap, same per-run price." },
         ].map((x) => (
-          <div key={x.t} className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+          <div key={x.t} className="flex items-start gap-3 tile px-4 py-3">
             <x.icon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
             <div>
               <p className="text-sm font-medium text-foreground">{x.t}</p>

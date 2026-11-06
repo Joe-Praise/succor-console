@@ -106,7 +106,6 @@ function LogsExplorer() {
     <div className="space-y-5">
       <PageHeader
         size="compact"
-        eyebrow="Operate"
         title="Logs"
         description="One priced, immutable record per metered run — the same rows your invoice is built from."
         action={

@@ -46,7 +46,7 @@ export default function SupportTicketPage() {
       ]}
     >
       <Section title="Your message">
-        <p className="rounded-xl border border-border bg-surface p-4 text-sm whitespace-pre-wrap text-foreground">{t.message}</p>
+        <p className="tile p-4 text-sm whitespace-pre-wrap text-foreground">{t.message}</p>
         {jobIds.length ? (
           <p className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             Runs mentioned:

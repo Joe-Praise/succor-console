@@ -233,7 +233,7 @@ export function RunIdentifiers({ record, base }: { record: ExecutionRecord; base
       : []),
   ];
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-surface p-4">
+    <div className="space-y-4 tile p-4">
       <p className="text-xs font-semibold tracking-wide text-faint uppercase">Identifiers</p>
       <dl className="space-y-2.5">
         {rows.map((r) => (

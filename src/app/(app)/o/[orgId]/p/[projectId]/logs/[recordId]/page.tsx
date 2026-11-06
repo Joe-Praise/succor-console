@@ -27,7 +27,7 @@ function LinkedRun({ projectId, jobId, base }: { projectId: string; jobId: strin
   }
   const rec = exec.data;
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+    <div className="space-y-3 tile p-4">
       <StatusTriplet jobStatus={rec.job.status} runStatus={rec.job.runStatus} delivery={primaryDelivery(rec)} />
       <p className="text-xs text-muted-foreground">
         {rec.usage.length} priced row{rec.usage.length === 1 ? "" : "s"} on this run ·{" "}
@@ -67,7 +67,7 @@ export default function UsageRecordPage() {
         { label: "Initiated by", value: <span className="font-mono text-xs">{r.initiatedBy ?? "—"}</span> },
       ]}
       aside={
-        <div className="space-y-3 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-3 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">About this record</p>
           <p className="text-muted-foreground">
             Written once, when the run reached its final state, and never changed after. The markup and pricing version
@@ -90,7 +90,7 @@ export default function UsageRecordPage() {
             ["Markup", r.markupMultiplier ? `× ${r.markupMultiplier}` : "—", "snapshotted on this row"],
             ["Billed", usdPrecise(r.billedUsd), "provider cost × markup"],
           ].map(([label, value, sub]) => (
-            <div key={label} className="rounded-xl border border-border bg-surface p-4">
+            <div key={label} className="tile p-4">
               <p className="text-xs text-faint">{label}</p>
               <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">{value}</p>
               <p className="mt-0.5 text-[11px] text-faint">{sub}</p>

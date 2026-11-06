@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SecretReveal } from "@/components/secret-reveal";
 import { DataTable, type Column } from "@/components/ops/data-table";
 import { FilterBar, SelectFilter } from "@/components/ops/filters";
+import { Callout, HttpStatus, MethodMark } from "@/components/ops/primitives";
 
 const FILTER_KEYS = ["result", "agent"] as const;
 
@@ -44,25 +45,24 @@ function CallbacksExplorer() {
     {
       id: "endpoint",
       header: "Endpoint",
-      className: "max-w-80",
+      className: "max-w-96",
       cell: (d) => (
-        <span className="block truncate font-mono text-xs text-muted-foreground" title={d.url}>
-          <span className="text-foreground">{d.method}</span> {d.url}
+        <span className="flex min-w-0 items-center font-mono text-xs text-foreground/85" title={d.url}>
+          <MethodMark method={d.method} />
+          <span className="truncate">{d.url}</span>
         </span>
       ),
     },
     {
       id: "result",
       header: "Result",
-      cell: (d) =>
-        d.ok ? (
-          <span className="text-sm text-success">{d.responseStatus ?? "OK"}</span>
-        ) : (
-          <span className="block max-w-56 text-sm text-error">
-            {d.responseStatus ?? "No response"}
-            {d.errorMessage ? <span className="block truncate text-xs text-muted-foreground">{d.errorMessage}</span> : null}
-          </span>
-        ),
+      cell: (d) => <HttpStatus status={d.responseStatus} ok={d.ok} />,
+    },
+    {
+      id: "error",
+      header: "Detail",
+      className: "max-w-56",
+      cell: (d) => <span className="block truncate text-xs text-muted-foreground" title={d.errorMessage ?? undefined}>{d.errorMessage ?? ""}</span>,
     },
     { id: "dur", header: "Duration", align: "right", cell: (d) => <span className="text-muted-foreground">{duration(d.durationMs)}</span> },
   ];
@@ -71,7 +71,6 @@ function CallbacksExplorer() {
     <div className="space-y-5">
       <PageHeader
         size="compact"
-        eyebrow="Operate"
         title="Callbacks"
         description="Every HTTP delivery attempt to your API in the last 30 days. 5xx, 429 and timeouts are retried up to 3×."
         action={
@@ -95,22 +94,10 @@ function CallbacksExplorer() {
         }
       />
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-border bg-surface p-4 text-xs leading-relaxed text-muted-foreground">
-          <p className="text-sm font-medium text-foreground">Verify the header</p>
-          Every request carries <code className="font-mono text-foreground">X-Succor-Callback-Key</code> (and the legacy{" "}
-          <code className="font-mono">X-Agent-API-Key</code>). Reject anything that doesn&apos;t match.
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4 text-xs leading-relaxed text-muted-foreground">
-          <p className="text-sm font-medium text-foreground">Make handlers idempotent</p>
-          A delivery can arrive more than once after a crash or retry. Durable deliveries carry a stable{" "}
-          <code className="font-mono text-foreground">X-Delivery-Id</code> — dedupe on it.
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4 text-xs leading-relaxed text-muted-foreground">
-          <p className="text-sm font-medium text-foreground">4xx means stop</p>
-          Your 5xx, 429 and timeouts are retried with backoff. Any other 4xx is permanent and not retried.
-        </div>
-      </div>
+      <Callout tone="info" href={`${base}/docs/callbacks`}>
+        Verify <code className="font-mono text-foreground">X-Succor-Callback-Key</code> on every request and dedupe on{" "}
+        <code className="font-mono text-foreground">X-Delivery-Id</code>. Your 5xx, 429 and timeouts retry up to 3 times; any other 4xx is final.
+      </Callout>
 
       <FilterBar active={active} onClear={reset} onRefresh={() => void callbacks.refetch()} refreshing={callbacks.isFetching}>
         <SelectFilter

@@ -33,7 +33,11 @@ function retryUnlessFinal(count: number, err: unknown): boolean {
 }
 
 /** Runs, newest first, keyset-paginated. Polls page one only while it shows live work. */
-export function useRuns(projectId: string, query: Omit<execApi.RunListQuery, "cursor"> = {}) {
+export function useRuns(
+  projectId: string,
+  query: Omit<execApi.RunListQuery, "cursor"> = {},
+  opts: { tailMs?: number } = {},
+) {
   return useInfiniteQuery({
     queryKey: runsKey(projectId, query),
     queryFn: ({ pageParam }) => execApi.listRuns(projectId, { ...query, cursor: pageParam }),
@@ -42,7 +46,7 @@ export function useRuns(projectId: string, query: Omit<execApi.RunListQuery, "cu
     enabled: !!projectId,
     retry: retryUnlessFinal,
     refetchInterval: (q) =>
-      q.state.data?.pages[0]?.jobs.some((j) => LIVE_JOB_STATUSES.has(j.status)) ? 5_000 : false,
+      opts.tailMs ?? (q.state.data?.pages[0]?.jobs.some((j) => LIVE_JOB_STATUSES.has(j.status)) ? 5_000 : false),
   });
 }
 

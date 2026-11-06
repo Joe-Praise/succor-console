@@ -82,7 +82,7 @@ export function CtaBand() {
 /** Simple FAQ accordion built on native details/summary — no JS needed. */
 export function Faq({ items }: { items: Array<{ q: string; a: string }> }) {
   return (
-    <div className="mx-auto max-w-2xl divide-y divide-border rounded-xl border border-border bg-surface">
+    <div className="mx-auto max-w-2xl divide-y divide-border tile">
       {items.map((item) => (
         <details key={item.q} className="group px-5 py-4">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">

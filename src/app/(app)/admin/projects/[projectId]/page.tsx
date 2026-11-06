@@ -28,7 +28,6 @@ export default function AdminProjectPage() {
   return (
     <DetailPage
       breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Projects", href: "/admin/projects" }, { label: p.name ?? projectId }]}
-      eyebrow="Project"
       title={p.name ?? projectId}
       id={projectId}
       status={<StatusBadge status={(p.status ?? "approved") as Status} />}
@@ -71,7 +70,7 @@ export default function AdminProjectPage() {
         { label: "Created", value: dateTime(p.createdAt) },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Related</p>
           {p.orgId ? (
             <Link href={`/o/${p.orgId}/p/${projectId}`} className="block text-brand hover:underline">

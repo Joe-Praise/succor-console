@@ -76,7 +76,7 @@ export default function McpServerPage() {
         { label: "Updated", value: dateTime(s.updatedAt) },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-xs leading-relaxed text-muted-foreground">
+        <div className="space-y-2 tile p-4 text-xs leading-relaxed text-muted-foreground">
           <p className="text-sm font-medium text-foreground">Safety rails</p>
           <p>The URL is SSRF-checked at registration and again on every request, including each redirect hop.</p>
           <p>The bearer token is AES-256-GCM encrypted at rest and never returned by the API — rotate it from Tools.</p>

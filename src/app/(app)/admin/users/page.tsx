@@ -27,7 +27,6 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <PageHeader
         size="compact"
-        eyebrow="Admin"
         title="Users"
         description="Platform accounts. Org membership is managed by each organization."
       />

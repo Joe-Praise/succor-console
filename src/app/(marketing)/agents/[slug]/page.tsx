@@ -93,7 +93,7 @@ Content-Type: application/json
           metered once — and the validated result is delivered to your callback. Poll the job if you
           prefer pull. No model to manage.
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+        <pre className="mt-4 overflow-x-auto tile p-4 font-mono text-xs leading-relaxed text-muted-foreground">
           {callSnippet}
         </pre>
       </section>
@@ -108,7 +108,7 @@ Content-Type: application/json
               <Link
                 key={a.agentType}
                 href={`/agents/${a.agentType}`}
-                className="flex h-full flex-col rounded-xl border border-border bg-surface p-5 transition-colors hover:border-strong"
+                className="flex h-full flex-col tile p-5 transition-colors hover:border-strong"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-medium text-foreground">{a.name}</h3>

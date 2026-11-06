@@ -24,14 +24,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ops/data-table";
 import { CursorPager } from "@/components/ops/primitives";
 import { FilterBar } from "@/components/ops/filters";
+import { StationLine, type Station } from "@/components/ops/station-line";
 
 const URL_KEYS = ["tab", "job", "decision"] as const;
 
-const FLOW = [
-  { n: "01", title: "Generate", body: "The agent runs and validates its output like any other job." },
-  { n: "02", title: "Hold", body: "The tenant-affecting delivery is parked — nothing reaches your API." },
-  { n: "03", title: "Decide", body: "An admin approves (optionally editing) or rejects with a note." },
-  { n: "04", title: "Deliver or learn", body: "Approve → delivered durably. Reject → the note becomes a style rule." },
+const FLOW: Station[] = [
+  { key: "generate", label: "Generate", state: "done", detail: "The agent runs and validates its output" },
+  { key: "hold", label: "Hold", state: "waiting", detail: "Delivery is parked, nothing reaches your API" },
+  { key: "decide", label: "Decide", state: "pending", detail: "An admin approves, edits or rejects" },
+  { key: "deliver", label: "Deliver or learn", state: "pending", detail: "Approved: delivered. Rejected: note becomes a style rule" },
 ];
 
 function PendingQueue({ focusJob }: { focusJob: string }) {
@@ -51,17 +52,9 @@ function PendingQueue({ focusJob }: { focusJob: string }) {
 
   return (
     <div className="space-y-5">
-      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {FLOW.map((s) => (
-          <li key={s.n} className="rounded-lg border border-border bg-surface px-3 py-2.5">
-            <p className="flex items-baseline gap-2 text-sm font-medium text-foreground">
-              <span className="font-mono text-[11px] text-brand">{s.n}</span>
-              {s.title}
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{s.body}</p>
-          </li>
-        ))}
-      </ol>
+      <div className="tile px-3 py-2">
+        <StationLine stations={FLOW} compact />
+      </div>
 
       {gatedAgents.length > 0 ? (
         <p className="text-xs text-muted-foreground">
@@ -217,7 +210,6 @@ function ApprovalCenter() {
     <div className="space-y-6">
       <PageHeader
         size="compact"
-        eyebrow="Operate"
         title="Approvals"
         description="High-risk agents generate, then stop. Nothing reaches your API until an admin signs off."
       />

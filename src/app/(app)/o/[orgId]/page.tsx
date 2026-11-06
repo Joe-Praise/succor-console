@@ -60,7 +60,7 @@ function ProjectHealthCard({
   return (
     <Link
       href={`/o/${orgId}/p/${project.projectId}`}
-      className="flex h-full flex-col gap-4 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-strong focus-visible:outline-2 focus-visible:outline-brand"
+      className="flex h-full flex-col gap-4 tile p-4 transition-colors hover:border-strong focus-visible:outline-2 focus-visible:outline-brand"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -115,7 +115,6 @@ export default function OrgOverviewPage() {
     <div className="space-y-6">
       <PageHeader
         size="compact"
-        eyebrow="Organization"
         title={org.name}
         description="Every project's health and spend in one place. Open a project for its runs, approvals and usage."
         action={

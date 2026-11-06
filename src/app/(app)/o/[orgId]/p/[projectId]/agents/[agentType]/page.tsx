@@ -119,7 +119,7 @@ export default function AgentPage() {
             {policies.map((p) => {
               const { icon: Icon, label, hint } = POLICY_META[p];
               return (
-                <div key={p} className="flex gap-3 rounded-xl border border-border bg-surface p-4">
+                <div key={p} className="flex gap-3 tile p-4">
                   <Icon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
                   <div>
                     <p className="text-sm font-medium text-foreground">{label}</p>
@@ -129,7 +129,7 @@ export default function AgentPage() {
               );
             })}
             {traits.map((t) => (
-              <div key={t} className="rounded-xl border border-border bg-surface p-4">
+              <div key={t} className="tile p-4">
                 <p className="text-sm font-medium text-foreground">{TRAIT_META[t].label}</p>
                 <p className="text-xs text-muted-foreground">{TRAIT_META[t].hint}</p>
               </div>

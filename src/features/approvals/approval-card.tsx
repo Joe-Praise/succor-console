@@ -150,7 +150,7 @@ export function ApprovalCard({
     <article
       id={`approval-${approval.jobId}`}
       className={cn(
-        "scroll-mt-24 rounded-xl border border-border bg-surface",
+        "scroll-mt-24 tile",
         focused && "border-brand/60 ring-2 ring-brand/20",
       )}
     >

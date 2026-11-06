@@ -64,7 +64,7 @@ export default function InvoicePage() {
         { label: "Payment reference", value: inv.paymentReference ? <span className="font-mono text-xs">{inv.paymentReference}</span> : "—" },
       ]}
       aside={
-        <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+        <div className="space-y-3 tile p-4">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Status</p>
           <ol className="space-y-2.5">
             {steps.map((s) => (

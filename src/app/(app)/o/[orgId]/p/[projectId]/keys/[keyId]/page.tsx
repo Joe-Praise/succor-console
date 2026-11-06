@@ -72,7 +72,7 @@ export default function ApiKeyPage() {
         { label: "Revoked", value: k.revokedAt ? dateTime(k.revokedAt) : "—" },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <KeyRoundIcon className="size-4 text-brand" />
           <p className="font-medium text-foreground">How this key is stored</p>
           <p className="text-xs leading-relaxed text-muted-foreground">

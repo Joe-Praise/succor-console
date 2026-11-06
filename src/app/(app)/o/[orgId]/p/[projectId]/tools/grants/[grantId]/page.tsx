@@ -79,7 +79,7 @@ export default function ToolGrantPage() {
         { label: "Granted", value: dateTime(g.createdAt) },
       ]}
       aside={
-        <div className="space-y-3 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-3 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Lifecycle</p>
           <dl className="space-y-2 text-xs">
             <div>

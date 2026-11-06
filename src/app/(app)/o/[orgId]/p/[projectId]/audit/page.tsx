@@ -72,20 +72,19 @@ function AuditExplorer() {
     <div className="space-y-5">
       <PageHeader
         size="compact"
-        eyebrow="Govern"
         title="Audit"
         description="Every human decision and privileged operation on this project, signed the moment it's written."
       />
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           <FingerprintIcon className="size-4 text-brand" />
           <p className="mt-2 text-sm font-medium text-foreground">Append-only, signed rows</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Each row carries an HMAC over its contents. Rows are only ever inserted — no edit or delete path exists.
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           <ShieldCheckIcon className="size-4 text-brand" />
           <p className="mt-2 text-sm font-medium text-foreground">Deletion shows up</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -93,7 +92,7 @@ function AuditExplorer() {
             sweep.
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="tile p-4">
           <p className="text-sm font-medium text-foreground">What this view is — and isn&apos;t</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             This is the data. Signatures are verified server-side by the operator, never in your browser, and prose

@@ -409,7 +409,7 @@ export function Inspector({
     <aside
       data-canvas-ui
       aria-label={title}
-      className="slide-in-right absolute inset-y-2 right-2 z-30 flex w-[min(420px,calc(100%-16px))] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-xl"
+      className="slide-in-right absolute inset-y-2 right-2 z-30 flex w-[min(420px,calc(100%-16px))] flex-col overflow-hidden tile shadow-xl"
     >
       <header className="flex items-start justify-between gap-2 px-4 pt-3.5 pb-2.5">
         <div className="min-w-0">

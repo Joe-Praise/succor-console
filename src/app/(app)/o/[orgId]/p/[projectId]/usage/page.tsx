@@ -52,7 +52,7 @@ function ChartCard({
 }) {
   const s = stackBy(buckets, group, metric, 5, labelOf, dayLabel);
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-surface p-4">
+    <div className="flex flex-col tile p-4">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {s.data.length === 0 ? (
         <p className="py-16 text-center text-sm text-faint">No usage in this window.</p>
@@ -124,7 +124,6 @@ function UsageExplorer() {
     <div className="space-y-6">
       <PageHeader
         size="compact"
-        eyebrow="Account"
         title="Usage & economics"
         description="What this project has cost, by agent or model — every number traceable to the priced records behind it."
         action={
@@ -283,7 +282,7 @@ function UsageExplorer() {
         </Section>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="tile p-4">
             <p className="text-sm font-semibold text-foreground">Monthly budget</p>
             <div className="mt-3">
               {current.isLoading ? (
@@ -299,7 +298,7 @@ function UsageExplorer() {
               <li>• Caps are set by your platform admin.</li>
             </ul>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="tile p-4">
             <p className="text-sm font-semibold text-foreground">What&apos;s metered</p>
             <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
               <li>

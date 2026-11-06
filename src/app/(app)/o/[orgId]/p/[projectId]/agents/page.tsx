@@ -214,7 +214,7 @@ export default function AgentsPage() {
               <Link
                 key={r._id}
                 href={`/o/${orgId}/p/${projectId}/agents/requests/${r._id}`}
-                className="block space-y-3 rounded-xl border border-border bg-surface px-4 py-3 transition-colors hover:border-strong"
+                className="block space-y-3 tile px-4 py-3 transition-colors hover:border-strong"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{r.title}</p>

@@ -77,7 +77,7 @@ export function ProjectConfigPanel({ project }: { project: AdminProjectRow }) {
   const saving = setAgents.isPending || updateProject.isPending;
 
   return (
-    <div className="space-y-5 rounded-xl border border-border bg-surface p-5">
+    <div className="space-y-5 tile p-5">
       <div>
         <p className="text-sm font-semibold text-foreground">Configuration</p>
         <p className="text-sm text-muted-foreground">Markup, budget cap, and which agents this project may run.</p>

@@ -3,11 +3,12 @@
 import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ClockIcon, CoinsIcon, RepeatIcon, SendIcon, StampIcon, SigmaIcon } from "lucide-react";
+import { StampIcon } from "lucide-react";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useExecution, isExecutionLive } from "@/features/executions/hooks";
 import { buildTimeline } from "@/features/executions/timeline";
+import { buildRunStations } from "@/features/executions/run-flow";
 import { diagnose, primaryDelivery } from "@/features/executions/diagnostics";
 import { EventList, EventWaterfall, EventInspector } from "@/features/executions/event-views";
 import {
@@ -22,13 +23,13 @@ import { useAgentNames } from "@/features/agents/use-agent-names";
 import { useOrgCtx } from "@/features/orgs/org-context";
 import { ORG_ROLE_RANK } from "@/lib/permissions";
 import { useUrlFilters } from "@/lib/url-filters";
-import { duration, elapsedMs, usdPrecise, tokens } from "@/lib/format";
-import { deliveryLabel } from "@/lib/status";
+import { dateTime, duration, elapsedMs, usdPrecise, tokens } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DetailPage, renderDetailState } from "@/components/ops/detail-page";
-import { Callout, KpiCard, StatusTriplet } from "@/components/ops/primitives";
+import { Callout, StatBand, StatusTriplet } from "@/components/ops/primitives";
+import { StationLine } from "@/components/ops/station-line";
 
 const TABS = ["timeline", "output", "input", "cost", "delivery", "audit"] as const;
 type Tab = (typeof TABS)[number];
@@ -69,6 +70,7 @@ function RunDetail() {
   const canDecide = ORG_ROLE_RANK[role] >= ORG_ROLE_RANK.admin;
 
   const selectEvent = (key: string) => set({ event: key, tab: null });
+  const stations = buildRunStations(record);
 
   return (
     <DetailPage
@@ -87,45 +89,44 @@ function RunDetail() {
       }
       aside={<RunIdentifiers record={record} base={base} />}
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiCard
-          label="Elapsed"
-          icon={ClockIcon}
-          value={elapsed === null ? "In progress" : duration(elapsed)}
-          sub={live ? "updating live" : "created → last state change"}
-          definition="From job creation to the job's last recorded state change. Not a sum of step durations — step start times aren't recorded."
-        />
-        <KpiCard
-          label="Attempts"
-          icon={RepeatIcon}
-          value={`${job.attempt} / ${job.maxAttempts}`}
-          sub={job.reviewedAt ? "reset by approval" : "claims used / budget"}
-          definition="Worker claims used out of this agent's run budget. Approval resets the counter so delivery gets a fresh budget."
-          tone={job.attempt > 1 ? "warning" : undefined}
-        />
-        <KpiCard
-          label="Cost → billed"
-          icon={CoinsIcon}
-          value={record.usage.length ? usdPrecise(billed) : "—"}
-          sub={record.usage.length ? `provider ${usdPrecise(cost)}` : "not metered yet"}
-          definition="Billed = recorded provider cost × your markup, snapshotted per priced row. Tool, infra and delivery costs aren't metered."
-        />
-        <KpiCard
-          label="Tokens"
-          icon={SigmaIcon}
-          value={record.usage.length ? tokens(tok) : "—"}
-          sub="input + output + embedding"
-          definition="Sum of tokens on this run's priced rows."
-        />
-        <KpiCard
-          label="Delivery"
-          icon={SendIcon}
-          value={delivery ? deliveryLabel(delivery) : "None"}
-          sub={delivery ? `attempt ${delivery.attempt} of 3` : "no callback recorded"}
-          definition="The callback to your API — tracked separately from the run's own outcome."
-          tone={delivery?.status === "dead" || delivery?.status === "failed" ? "error" : undefined}
+      <div className="tile px-3 py-2">
+        <StationLine
+          stations={stations.map((s) => ({
+            key: s.key,
+            label: s.label,
+            state: s.state,
+            detail: s.detail,
+            note: s.at ? dateTime(s.at) : undefined,
+            selected: s.eventKey !== null && s.eventKey === selectedKey && tab === "timeline",
+            onSelect: s.eventKey ? () => selectEvent(s.eventKey!) : undefined,
+          }))}
         />
       </div>
+
+      <StatBand
+        stats={[
+          {
+            label: "Elapsed",
+            value: elapsed === null ? "In progress" : duration(elapsed),
+            sub: live ? "updating live" : "created to last state change",
+            hint: "From job creation to the job's last recorded state change. Not a sum of step durations: step start times aren't recorded.",
+          },
+          {
+            label: "Attempts",
+            value: `${job.attempt} / ${job.maxAttempts}`,
+            sub: job.reviewedAt ? "reset by approval" : "claims used / budget",
+            tone: job.attempt > 1 ? "warning" : undefined,
+            hint: "Worker claims used out of this agent's run budget. Approval resets the counter so delivery gets a fresh budget.",
+          },
+          {
+            label: "Billed",
+            value: record.usage.length ? usdPrecise(billed) : "—",
+            sub: record.usage.length ? `provider ${usdPrecise(cost)}` : "not metered yet",
+            hint: "Billed = recorded provider cost × your markup, snapshotted per priced row. Tool, infra and delivery costs aren't metered.",
+          },
+          { label: "Tokens", value: record.usage.length ? tokens(tok) : "—", sub: "input + output + embedding", hint: "Sum of tokens on this run's priced rows." },
+        ]}
+      />
 
       <Callout tone={SEVERITY_TONE[diagnosis.severity]} title={diagnosis.title}>
         <p>{diagnosis.explanation}</p>
@@ -142,7 +143,7 @@ function RunDetail() {
         <div className="lg:h-[640px]">
           <EventList events={events} selectedKey={selectedKey} onSelect={selectEvent} />
         </div>
-        <div className="min-w-0 space-y-4 rounded-xl border border-border bg-surface p-4">
+        <div className="tile min-w-0 space-y-4 p-4">
           <Tabs value={tab} onValueChange={(v) => set({ tab: v === "timeline" ? null : String(v) })}>
             <TabsList>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>

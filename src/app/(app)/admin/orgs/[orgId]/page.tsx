@@ -38,7 +38,6 @@ export default function AdminOrgDetailPage() {
   return (
     <DetailPage
       breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Organizations", href: "/admin/orgs" }, { label: org.name ?? orgId }]}
-      eyebrow="Organization"
       title={org.name ?? orgId}
       id={orgId}
       status={org.status ? <StatusBadge status={org.status as Status} /> : null}
@@ -71,7 +70,7 @@ export default function AdminOrgDetailPage() {
         },
       ]}
       aside={
-        <div className="space-y-2 rounded-xl border border-border bg-surface p-4 text-sm">
+        <div className="space-y-2 tile p-4 text-sm">
           <p className="text-xs font-semibold tracking-wide text-faint uppercase">Related</p>
           <Link href={`/o/${orgId}`} className="block text-brand hover:underline">
             Open in the console
