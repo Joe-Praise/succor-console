@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 const LINKS = [
   { label: "Platform", href: "/platform" },
   { label: "Agents", href: "/agents" },
+  { label: "Docs", href: "/docs" },
   { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
 ] as const;
