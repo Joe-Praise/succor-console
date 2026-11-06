@@ -6,6 +6,7 @@ import { useAppTheme } from "@/providers/theme-provider";
 import {
   LayoutDashboardIcon,
   PaletteIcon,
+  BookOpenIcon,
   MoonIcon,
   SunIcon,
     Building2Icon,
@@ -22,7 +23,7 @@ import {
   CommandItem,
   CommandSeparator,
 } from "@/components/ui/command";
-import { ADMIN_NAV, orgNav, parseScope, projectNavGroups, type NavItem } from "@/lib/nav";
+import { ADMIN_TABS, orgTabs, parseScope, projectTabs, tabPages, type NavItem } from "@/lib/nav";
 import { ORG_ROLE_RANK, type OrgRole } from "@/lib/permissions";
 import { useMe } from "@/features/auth/hooks";
 
@@ -70,11 +71,13 @@ export function CommandPalette() {
   const allowed = (i: NavItem) => !i.minRole || ORG_ROLE_RANK[role] >= ORG_ROLE_RANK[i.minRole];
   const nav: Nav[] = [];
   if (orgId) {
-    for (const i of orgNav(orgId).filter(allowed)) nav.push({ ...i, label: `Org · ${i.label}`, group: "Organization" });
     if (projectId) {
-      for (const g of projectNavGroups(orgId, projectId)) {
-        for (const i of g.items.filter(allowed)) nav.push({ ...i, group: g.label ? `Project · ${g.label}` : "Project" });
+      for (const tab of projectTabs(orgId, projectId)) {
+        for (const i of tabPages(tab).filter(allowed)) nav.push({ ...i, group: tab.items ? `Project · ${tab.label}` : "Project" });
       }
+    }
+    for (const i of orgTabs(orgId).flatMap(tabPages).filter(allowed)) {
+      nav.push({ ...i, label: `Org · ${i.label}`, group: "Organization" });
     }
   } else {
     nav.push({ label: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon, group: "Navigation" });
@@ -83,9 +86,10 @@ export function CommandPalette() {
     }
   }
   if (me?.isPlatformAdmin) {
-    for (const i of ADMIN_NAV) nav.push({ ...i, label: `Admin · ${i.label}`, group: "Admin" });
+    for (const i of ADMIN_TABS.flatMap(tabPages)) nav.push({ ...i, label: `Admin · ${i.label}`, group: "Admin" });
   }
   nav.push(
+    { label: "Documentation", href: "/docs", icon: BookOpenIcon, group: "Reference" },
     { label: "What the platform can do", href: "/platform", icon: SparklesIcon, group: "Reference" },
     { label: "Design system", href: "/design", icon: PaletteIcon, group: "Reference" },
   );

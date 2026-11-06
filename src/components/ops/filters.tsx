@@ -100,7 +100,7 @@ export function TimeRangeTabs({
   presets?: readonly RangeKey[];
 }) {
   return (
-    <div role="radiogroup" aria-label="Time range" className="inline-flex h-8 items-center rounded-lg border border-border bg-surface p-0.5">
+    <div role="radiogroup" aria-label="Time range" className="inline-flex h-7 items-center rounded-lg border border-border p-0.5">
       {RANGE_PRESETS.filter((p) => presets.includes(p.key)).map((p) => (
         <button
           key={p.key}
@@ -109,8 +109,8 @@ export function TimeRangeTabs({
           aria-checked={value === p.key}
           onClick={() => onChange(p.key)}
           className={cn(
-            "h-full rounded-md px-2.5 text-xs font-medium tabular-nums transition-colors",
-            value === p.key ? "bg-raised text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
+            "h-full rounded-[4px] px-2 text-xs font-medium tabular-nums transition-colors",
+            value === p.key ? "bg-raised text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
           {p.label}
@@ -141,7 +141,7 @@ export function SearchFilter({
   }
   return (
     <div className={cn("relative", className)}>
-      <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
+      <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-faint" />
       <Input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -153,7 +153,7 @@ export function SearchFilter({
         }}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-8 w-56 pl-8 font-mono text-xs"
+        className="h-7 w-56 pl-7 font-mono text-xs"
       />
     </div>
   );

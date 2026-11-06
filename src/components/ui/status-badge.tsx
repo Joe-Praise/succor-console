@@ -124,7 +124,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] px-1.5 text-[11px] font-medium whitespace-nowrap",
         s.bg,
         s.text,
         className,
@@ -142,7 +142,7 @@ export function AnyStatusBadge({ value, className }: { value: string | null | un
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 rounded-full bg-raised px-2 py-0.5 text-xs font-medium text-muted-foreground",
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] bg-raised px-1.5 text-[11px] font-medium text-muted-foreground",
         className,
       )}
     >

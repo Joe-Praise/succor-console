@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
 /**
- * Theme policy — "warm dark control plane":
- *   • The APP (console, auth, admin) defaults to the warm-charcoal dark theme; light
- *     stays available through the toggle and the choice persists.
- *   • The MARKETING site is always the warm-paper light theme, whatever the visitor
- *     picked inside the app.
+ * Theme policy:
+ *   • The APP (console, auth, admin) defaults to the dark ink theme; light stays
+ *     available through the toggle and the choice persists.
+ *   • The MARKETING site and public docs are always dark: the illustration and the
+ *     product windows are drawn for it, whatever the visitor picked inside the app.
  *
  * Mechanism: next-themes 0.4.6 ignores nested providers, so the policy lives on the
  * ONE root provider as `forcedTheme`, derived from the pathname. `attribute="class"`
@@ -21,10 +21,14 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
  */
 
 const MARKETING_PATHS = ["/", "/pricing", "/contact", "/platform"];
+const MARKETING_PREFIXES = ["/agents", "/docs"];
 
 export function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  return MARKETING_PATHS.includes(pathname) || pathname === "/agents" || pathname.startsWith("/agents/");
+  return (
+    MARKETING_PATHS.includes(pathname) ||
+    MARKETING_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  );
 }
 
 export function ThemeProvider({
@@ -38,7 +42,7 @@ export function ThemeProvider({
       defaultTheme="dark"
       enableSystem={false}
       disableTransitionOnChange
-      forcedTheme={isMarketingPath(pathname) ? "light" : undefined}
+      forcedTheme={isMarketingPath(pathname) ? "dark" : undefined}
       {...props}
     >
       {children}

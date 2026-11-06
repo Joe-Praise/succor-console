@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ClockIcon, OctagonAlertIcon, SearchXIcon } from "lucide-react";
 
 import { OrgProvider, useOrgCtx } from "@/features/orgs/org-context";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { pageLayout } from "@/lib/nav";
 
 /** Banner surfaced on every org page while the org can't run agents. */
 function OrgStatusBanner() {
@@ -13,7 +15,7 @@ function OrgStatusBanner() {
 
   if (org.status === "pending") {
     return (
-      <div className="mb-5 flex items-start gap-2.5 rounded-lg bg-warning-bg px-4 py-3 text-sm text-warning">
+      <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-warning/25 bg-warning-bg px-3.5 py-2.5 text-[13px] text-warning">
         <ClockIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
         <p>
           <span className="font-medium">Awaiting approval.</span> You can set everything up
@@ -24,7 +26,7 @@ function OrgStatusBanner() {
   }
   if (org.status === "suspended") {
     return (
-      <div className="mb-5 flex items-start gap-2.5 rounded-lg bg-error-bg px-4 py-3 text-sm text-error">
+      <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-error/25 bg-error-bg px-3.5 py-2.5 text-[13px] text-error">
         <OctagonAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
         <p>
           <span className="font-medium">Organization suspended.</span> Agent calls are
@@ -43,6 +45,8 @@ export function OrgLayoutClient({
   orgId: string;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const layout = pageLayout(pathname);
   return (
     <OrgProvider
       orgId={orgId}
@@ -59,10 +63,17 @@ export function OrgLayoutClient({
         </div>
       }
     >
-      <div className="mx-auto max-w-[1400px]">
-        <OrgStatusBanner />
-        {children}
-      </div>
+      {layout === "page" ? (
+        <div className="mx-auto max-w-350">
+          <OrgStatusBanner />
+          {children}
+        </div>
+      ) : (
+        <div className={layout === "canvas" ? "flex h-full flex-col" : undefined}>
+          <OrgStatusBanner />
+          {children}
+        </div>
+      )}
     </OrgProvider>
   );
 }

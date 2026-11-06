@@ -54,7 +54,7 @@ export function IdChip({
   return (
     <span
       className={cn(
-        "relative z-10 inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-background/60 py-0.5 pr-0.5 pl-1.5 font-mono text-[11px] text-muted-foreground",
+        "relative z-10 inline-flex h-5 max-w-full items-center gap-1 rounded-[4px] border border-border pr-px pl-1.5 font-mono text-[11px] text-muted-foreground",
         className,
       )}
       title={id}
@@ -65,7 +65,7 @@ export function IdChip({
         type="button"
         onClick={copy}
         aria-label={`Copy ${label ?? "id"}`}
-        className="grid size-5 shrink-0 place-items-center rounded text-faint transition-colors hover:bg-raised hover:text-foreground"
+        className="grid size-4 shrink-0 place-items-center rounded-[3px] text-faint transition-colors hover:bg-raised hover:text-foreground"
       >
         {copied ? <CheckIcon className="size-3 text-success" /> : <CopyIcon className="size-3" />}
       </button>
@@ -78,10 +78,10 @@ export function IdChip({
 // ---------------------------------------------------------------------------
 
 const CALLOUT_TONE: Record<"info" | "warning" | "error" | "success", { cls: string; icon: LucideIcon }> = {
-  info: { cls: "bg-info-bg text-info", icon: InfoIcon },
-  warning: { cls: "bg-warning-bg text-warning", icon: TriangleAlertIcon },
-  error: { cls: "bg-error-bg text-error", icon: CircleAlertIcon },
-  success: { cls: "bg-success-bg text-success", icon: CircleCheckIcon },
+  info: { cls: "border-info/25 bg-info-bg [&>svg]:text-info", icon: InfoIcon },
+  warning: { cls: "border-warning/25 bg-warning-bg [&>svg]:text-warning", icon: TriangleAlertIcon },
+  error: { cls: "border-error/25 bg-error-bg [&>svg]:text-error", icon: CircleAlertIcon },
+  success: { cls: "border-success/25 bg-success-bg [&>svg]:text-success", icon: CircleCheckIcon },
 };
 
 export function Callout({
@@ -104,14 +104,14 @@ export function Callout({
     <>
       <t.icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
-        {title ? <p className="font-medium">{title}</p> : null}
-        {children ? <div className={cn(title && "mt-0.5", "opacity-90")}>{children}</div> : null}
+        {title ? <p className="font-semibold">{title}</p> : null}
+        {children ? <div className={cn(title && "mt-0.5", "text-muted-foreground")}>{children}</div> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
       {href ? <ChevronRightIcon className="mt-0.5 size-4 shrink-0" aria-hidden /> : null}
     </>
   );
-  const cls = cn("flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm", t.cls, className);
+  const cls = cn("flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] text-foreground", t.cls, className);
   return href ? (
     <Link href={href} className={cn(cls, "transition-opacity hover:opacity-90")}>
       {body}
@@ -190,16 +190,16 @@ export function KpiCard({
           </Tooltip>
         ) : null}
       </div>
-      <div className="mt-2 min-h-8">
+      <div className="mt-1.5 min-h-7">
         {loading ? (
           <Skeleton className="h-7 w-24" />
         ) : unavailable ? (
           <p className="text-sm text-faint">{unavailable}</p>
         ) : (
-          <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
+          <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
         )}
       </div>
-      <div className="mt-1 flex items-center gap-2 text-xs">
+      <div className="mt-0.5 flex items-center gap-2 text-[11px]">
         {!loading && !unavailable && delta != null ? (
           <span className={cn("inline-flex items-center gap-0.5 font-medium", deltaGood ? "text-success" : "text-error")}>
             {delta >= 0 ? <ArrowUpRightIcon className="size-3" /> : <ArrowDownRightIcon className="size-3" />}
@@ -210,9 +210,9 @@ export function KpiCard({
       </div>
     </>
   );
-  const cls = "relative block rounded-xl border border-border bg-surface p-4";
+  const cls = "tile relative block p-3";
   return href ? (
-    <Link href={href} className={cn(cls, "transition-colors hover:border-strong")}>
+    <Link href={href} className={cn(cls, "tile-link")}>
       {inner}
     </Link>
   ) : (
@@ -277,7 +277,7 @@ export function DeliveryBadge({
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] px-1.5 text-[11px] font-medium whitespace-nowrap",
         TONE_TEXT[tone],
         className,
       )}

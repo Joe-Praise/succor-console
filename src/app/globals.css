@@ -5,13 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================================
-   Succor design system — "warm minimal"
-   Feel: claude.ai × chatgpt.com — a warm paper canvas, calm and spacious,
-   generous rounded shapes, comfortable controls, soft elevation. Neutral
-   near-black primary actions (ChatGPT-clean) with a warm clay accent (Claude)
-   used sparingly on links, active nav, focus, and brand moments. An editorial
-   serif carries the largest display headings.
-   Components use semantic tokens (bg-surface, text-brand) — never raw hex.
+   Succor design system — "the signal line"
+   A request travels a line through stations: accepted, working, held, delivered.
+   Plum-black ink, warm white text, one ember accent. Crisp 1px borders, small
+   radii, near-zero shadow, dense 13px UI, with a serif reserved for display
+   moments (marketing, docs). Components use semantic tokens — never raw hex.
    ========================================================================= */
 
 @theme inline {
@@ -21,25 +19,27 @@
   --font-serif: var(--font-newsreader);
   --font-heading: var(--font-geist-sans);
 
-  /* Comfortable, roomy body — not dense (14px controls, 15px prose base). */
-  --text-sm: 0.875rem; /* 14px */
-  --text-sm--line-height: 1.45rem;
+  /* Dense, crisp UI: 13px controls and rows, 14px base. */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-sm--line-height: 1.25rem;
+  --text-xs: 0.75rem; /* 12px */
+  --text-xs--line-height: 1.05rem;
 
-  /* Radius scale — soft & generous. */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px; /* inputs · buttons */
-  --radius-xl: 14px; /* cards · popovers · tables */
-  --radius-2xl: 20px; /* modals · ⌘K */
-  --radius-3xl: 26px;
-  --radius-4xl: 999px; /* pills */
+  /* Radius scale — small and exact. */
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 6px; /* inputs · buttons */
+  --radius-xl: 8px; /* tiles · cards · tables */
+  --radius-2xl: 12px; /* modals · ⌘K */
+  --radius-3xl: 16px; /* marketing panels */
+  --radius-4xl: 999px;
 
-  /* Soft, warm elevation. */
-  --shadow-xs: 0 1px 2px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k)));
-  --shadow-sm: 0 1px 2px rgb(var(--shadow-rgb) / calc(0.05 * var(--shadow-k))), 0 1px 3px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k)));
-  --shadow-md: 0 2px 6px rgb(var(--shadow-rgb) / calc(0.06 * var(--shadow-k))), 0 4px 14px rgb(var(--shadow-rgb) / calc(0.05 * var(--shadow-k)));
-  --shadow-lg: 0 8px 30px rgb(var(--shadow-rgb) / calc(0.12 * var(--shadow-k)));
-  --shadow-xl: 0 16px 48px rgb(var(--shadow-rgb) / calc(0.16 * var(--shadow-k)));
+  /* Elevation is rare: borders do the work; only floating things lift. */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 4px 16px rgb(var(--shadow-rgb) / calc(0.08 * var(--shadow-k)));
+  --shadow-lg: 0 8px 28px rgb(var(--shadow-rgb) / calc(0.12 * var(--shadow-k)));
+  --shadow-xl: 0 18px 50px rgb(var(--shadow-rgb) / calc(0.18 * var(--shadow-k)));
 
   /* --- shadcn semantic tokens (values below in :root / .dark) --- */
   --color-background: var(--background);
@@ -95,58 +95,62 @@
   --color-chart-6: var(--chart-6);
   --color-chart-grid: var(--chart-grid);
   --color-chart-axis: var(--chart-axis);
+  --color-canvas: var(--canvas);
+  --color-wire: var(--wire);
 }
 
 /* ---------------------------------------------------------------------------
-   LIGHT theme (default) — warm paper
+   LIGHT theme — cool paper, same ember. Available from the app toggle.
    --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
-  --shadow-rgb: 50 46 40;
+  --shadow-rgb: 40 30 45;
   --shadow-k: 1;
-  --background: #faf9f5; /* warm paper canvas */
+  --background: #f6f4f1;
   --surface: #ffffff;
-  --raised: #f2f0e9;
+  --raised: #efece8;
   --overlay: #ffffff;
 
-  --border-subtle: #ece9df;
-  --border: #e4e1d6;
-  --border-strong: #d6d2c4;
+  --border-subtle: #ebe7e2;
+  --border: #e0dbd5;
+  --border-strong: #cbc5bd;
 
-  --foreground: #262622; /* warm near-black */
-  --text-secondary: #6b6860;
-  --text-tertiary: #97948a;
+  --foreground: #1b1720;
+  --text-secondary: #5c5563;
+  --text-tertiary: #766f7c;
 
-  /* accent — Claude clay (used sparingly: links, active, focus, brand) */
-  --brand: #c05f3c;
+  --brand: #c8470f;
   --brand-foreground: #ffffff;
-  --brand-muted: color-mix(in oklab, #c05f3c 12%, transparent);
+  --brand-muted: color-mix(in oklab, #c8470f 11%, transparent);
 
-  /* primary action — neutral near-black (ChatGPT-clean) */
-  --solid: #2a2824;
-  --solid-foreground: #faf9f5;
+  --solid: var(--brand);
+  --solid-foreground: var(--brand-foreground);
 
-  --success: #4d7c46;
-  --warning: #a7761f;
-  --error: #b6402f;
-  --success-bg: color-mix(in oklab, var(--success) 13%, transparent);
-  --warning-bg: color-mix(in oklab, var(--warning) 15%, transparent);
-  --error-bg: color-mix(in oklab, var(--error) 12%, transparent);
-  --info: #3f6b95; /* warm steel — live/running states, never confused with warning */
-  --info-bg: color-mix(in oklab, var(--info) 13%, transparent);
+  --success: #15803d;
+  --warning: #a16207;
+  --error: #c62f3b;
+  --info: #2563c9;
+  --success-bg: color-mix(in oklab, var(--success) 11%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 13%, transparent);
+  --error-bg: color-mix(in oklab, var(--error) 10%, transparent);
+  --info-bg: color-mix(in oklab, var(--info) 10%, transparent);
 
-  /* Categorical series (agents/models). Deliberately NOT the success/error hues, so a
-     series never reads as an outcome; outcome charts use --success/--error directly. */
-  --chart-1: #c05f3c;
-  --chart-2: #5b7c9e;
-  --chart-3: #c1912e;
-  --chart-4: #9b5b8a;
-  --chart-5: #4c9a8f;
-  --chart-6: #7a8b3c;
-  --chart-grid: #e4e1d6;
-  --chart-axis: #97948a;
+  /* Categorical series (agents/models). Deliberately NOT the outcome hues, so a
+     series never reads as good or bad; outcome charts use --success/--error. */
+  --chart-1: #c8470f;
+  --chart-2: #2563c9;
+  --chart-3: #7c4dd6;
+  --chart-4: #0e9384;
+  --chart-5: #b7791f;
+  --chart-6: #c2387e;
+  --chart-grid: #e8e4de;
+  --chart-axis: #857e8b;
 
-  --radius: 0.875rem;
+  --canvas: #f1eeea;
+  --canvas-dot: rgb(40 30 45 / 0.16);
+  --wire: #bdb6ad;
+
+  --radius: 0.5rem;
 
   /* shadcn wiring → design tokens */
   --card: var(--surface);
@@ -165,7 +169,7 @@
   --input: var(--border);
   --ring: var(--brand);
 
-  --sidebar: var(--background);
+  --sidebar: var(--surface);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--brand-foreground);
@@ -176,49 +180,53 @@
 }
 
 /* ---------------------------------------------------------------------------
-   DARK theme — warm charcoal
+   DARK theme (default) — plum-black ink
    --------------------------------------------------------------------------- */
 .dark {
   color-scheme: dark;
   --shadow-rgb: 0 0 0;
-  --shadow-k: 5;
-  --background: #211f1c;
-  --surface: #2a2825;
-  --raised: #35322e;
-  --overlay: #2f2c29;
+  --shadow-k: 4;
+  --background: #0f0d12;
+  --surface: #16131a;
+  --raised: #1f1b24;
+  --overlay: #1b1720;
 
-  --border-subtle: #333029;
-  --border: #403c35;
-  --border-strong: #4d483f;
+  --border-subtle: #211d26;
+  --border: #2b2630;
+  --border-strong: #3e3845;
 
-  --foreground: #f0eee6;
-  --text-secondary: #b2ada2;
-  --text-tertiary: #837e73;
+  --foreground: #f4f1ec;
+  --text-secondary: #ada6b3;
+  --text-tertiary: #857e8c;
 
-  --brand: #d97757; /* brighter clay for dark */
-  --brand-foreground: #ffffff;
-  --brand-muted: color-mix(in oklab, #d97757 20%, transparent);
+  --brand: #f27d4f; /* ember */
+  --brand-foreground: #1a0c06;
+  --brand-muted: color-mix(in oklab, #f27d4f 15%, transparent);
 
-  --solid: #f0eee6; /* light neutral primary on dark (ChatGPT-style) */
-  --solid-foreground: #262622;
+  --solid: var(--brand);
+  --solid-foreground: var(--brand-foreground);
 
-  --success: #7fb069;
-  --warning: #e0a32e;
-  --error: #e0685e;
-  --success-bg: color-mix(in oklab, var(--success) 16%, transparent);
-  --warning-bg: color-mix(in oklab, var(--warning) 16%, transparent);
-  --error-bg: color-mix(in oklab, var(--error) 16%, transparent);
-  --info: #86a9d4;
-  --info-bg: color-mix(in oklab, var(--info) 17%, transparent);
+  --success: #4fd18b;
+  --warning: #f2b84b;
+  --error: #f4616d;
+  --info: #6ea8fe;
+  --success-bg: color-mix(in oklab, var(--success) 13%, transparent);
+  --warning-bg: color-mix(in oklab, var(--warning) 13%, transparent);
+  --error-bg: color-mix(in oklab, var(--error) 14%, transparent);
+  --info-bg: color-mix(in oklab, var(--info) 14%, transparent);
 
-  --chart-1: #d97757;
-  --chart-2: #7f9cc4;
-  --chart-3: #e0b84e;
-  --chart-4: #c07ba8;
-  --chart-5: #5fb5a8;
-  --chart-6: #a3b35c;
-  --chart-grid: #403c35;
-  --chart-axis: #837e73;
+  --chart-1: #f27d4f;
+  --chart-2: #6ea8fe;
+  --chart-3: #b18cf9;
+  --chart-4: #3fd0bd;
+  --chart-5: #f0c75a;
+  --chart-6: #f07ab6;
+  --chart-grid: #231f28;
+  --chart-axis: #7a7381;
+
+  --canvas: #0b0a0e;
+  --canvas-dot: rgb(255 255 255 / 0.085);
+  --wire: #5a5263;
 
   --card: var(--surface);
   --card-foreground: var(--foreground);
@@ -236,7 +244,7 @@
   --input: var(--border);
   --ring: var(--brand);
 
-  --sidebar: #1b1916;
+  --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--brand-foreground);
@@ -252,16 +260,27 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-size: 15px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
   }
   html {
     @apply font-sans;
   }
   ::selection {
-    background: var(--brand-muted);
+    background: color-mix(in oklab, var(--brand) 32%, transparent);
+  }
+  /* Thin, quiet scrollbars: part of the crisp look, and they follow the theme. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  code,
+  kbd,
+  pre {
+    font-feature-settings: "liga" 0;
   }
 }
 
@@ -288,5 +307,142 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* The dotted ground the canvas sits on. */
+  .canvas-dots {
+    background-color: var(--canvas);
+    background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* A raised tile: one border, a whisper of top light, a crisp hover. */
+  .tile {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+  .tile-link:hover {
+    border-color: var(--border-strong);
+    background: color-mix(in oklab, var(--surface), var(--foreground) 2.5%);
+  }
+
+  /* Display serif: marketing and docs headings only. */
+  .display {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+  }
+
+  /* Small uppercase label, the kicker over a section. */
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  /* Film grain over illustration, so flat vector doesn't look like clip art. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* The signal: dashes moving along a wire. Stations and wires share this. */
+  .signal-flow {
+    stroke-dasharray: 5 7;
+    animation: signal-flow 0.9s linear infinite;
+  }
+  .signal-idle {
+    stroke-dasharray: 3 5;
+  }
+  .live-dot {
+    position: relative;
+  }
+  .live-dot::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: live-ring 1.8s ease-out infinite;
+  }
+  .rise-in {
+    animation: rise-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .slide-in-right {
+    animation: slide-in-right 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes signal-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+@keyframes live-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+@keyframes lantern {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-flow,
+  .live-dot::after,
+  .rise-in,
+  .slide-in-right,
+  .twinkle,
+  .lantern {
+    animation: none !important;
+  }
+  .signal-pulse {
+    display: none;
   }
 }

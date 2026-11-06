@@ -72,9 +72,9 @@ export function DataTable<T>({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="tile overflow-hidden">
         <Table>
-          <TableHeader className="bg-raised/50">
+          <TableHeader>
             <TableRow className="hover:bg-transparent">
               {columns.map((c) => (
                 <TableHead
@@ -104,7 +104,7 @@ export function DataTable<T>({
                       key={getRowKey(row)}
                       className={cn(
                         "relative",
-                        href && "cursor-pointer hover:bg-raised/60 focus-within:bg-raised/60",
+                        href && "cursor-pointer hover:bg-raised/70 focus-within:bg-raised/70",
                       )}
                     >
                       {columns.map((c, i) => (
