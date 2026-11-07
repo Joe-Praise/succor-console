@@ -42,8 +42,8 @@ const KIND_ICON = { single: CircleDotIcon, fanout: GitForkIcon, gate: ScaleIcon 
 
 const STEP_TONE: Record<string, string> = {
   succeeded: "bg-success",
-  running: "bg-info animate-pulse",
-  critiquing: "bg-info animate-pulse",
+  running: "bg-info live-dot",
+  critiquing: "bg-info live-dot",
   paused: "bg-warning",
   failed: "bg-error",
   pending: "bg-border",
@@ -54,7 +54,7 @@ function StepProgress({ wf }: { wf: Workflow }) {
   return (
     <div className="flex w-full gap-1" aria-label={`Step ${wf.currentStep + 1} of ${wf.steps.length}`}>
       {wf.steps.map((s) => (
-        <span key={s.name} className={cn("h-1.5 flex-1 rounded-full", STEP_TONE[s.status] ?? "bg-border")} />
+        <span key={s.name} className={cn("h-[3px] flex-1 rounded-[1px]", STEP_TONE[s.status] ?? "bg-border")} />
       ))}
     </div>
   );
@@ -175,7 +175,7 @@ export default function WorkflowsPage() {
         <h2 className="text-sm font-medium text-faint">Available pipelines</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           {WORKFLOW_TEMPLATES.map((t) => (
-            <div key={t.workflowType} className="flex flex-col rounded-xl border border-border bg-surface p-5">
+            <div key={t.workflowType} className="flex flex-col tile p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium text-foreground">{t.name}</p>
@@ -248,7 +248,7 @@ export default function WorkflowsPage() {
               <Link
                 key={wf.id}
                 href={`${base}/workflows/${wf.id}`}
-                className="block rounded-xl border border-border bg-surface px-4 py-3 transition-colors hover:border-strong"
+                className="block tile px-4 py-3 transition-colors hover:border-strong"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">

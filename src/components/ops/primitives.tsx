@@ -1,0 +1,538 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import {
+  ArrowDownRightIcon,
+  ArrowUpRightIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  CircleAlertIcon,
+  CopyIcon,
+  InfoIcon,
+  TriangleAlertIcon,
+  CircleCheckIcon,
+  type LucideIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { cn } from "@/lib/utils";
+import { shortId } from "@/lib/format";
+import { deliveryLabel, deliveryTone, TONE_BG, type Tone } from "@/lib/status";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AnyStatusBadge } from "@/components/ui/status-badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { RollingNumber } from "@/components/charts/rolling-number";
+
+// ---------------------------------------------------------------------------
+// IdChip — a mono identifier with copy. Interactive, so it never triggers row nav.
+// ---------------------------------------------------------------------------
+
+export function IdChip({
+  id,
+  full = false,
+  label,
+  className,
+}: {
+  id: string;
+  /** Show the whole id instead of the last 8 characters. */
+  full?: boolean;
+  label?: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  function copy(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    void navigator.clipboard
+      .writeText(id)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => toast.error("Couldn't copy — select the text manually"));
+  }
+  return (
+    <span
+      className={cn(
+        "relative z-10 inline-flex h-5 max-w-full items-center gap-1 rounded-[4px] border border-border pr-px pl-1.5 font-mono text-[11px] text-muted-foreground",
+        className,
+      )}
+      title={id}
+    >
+      {label ? <span className="text-faint">{label}</span> : null}
+      <span className="truncate text-foreground">{full ? id : shortId(id)}</span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={`Copy ${label ?? "id"}`}
+        className="grid size-4 shrink-0 place-items-center rounded-[3px] text-faint transition-colors hover:bg-raised hover:text-foreground"
+      >
+        {copied ? <CheckIcon className="size-3 text-success" /> : <CopyIcon className="size-3" />}
+      </button>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Callout — the one banner (replaces eight hand-rolled copies).
+// ---------------------------------------------------------------------------
+
+const CALLOUT_TONE: Record<"info" | "warning" | "error" | "success", { cls: string; icon: LucideIcon }> = {
+  info: { cls: "border-info/25 bg-info-bg [&>svg]:text-info", icon: InfoIcon },
+  warning: { cls: "border-warning/25 bg-warning-bg [&>svg]:text-warning", icon: TriangleAlertIcon },
+  error: { cls: "border-error/25 bg-error-bg [&>svg]:text-error", icon: CircleAlertIcon },
+  success: { cls: "border-success/25 bg-success-bg [&>svg]:text-success", icon: CircleCheckIcon },
+};
+
+export function Callout({
+  tone = "info",
+  title,
+  children,
+  href,
+  action,
+  className,
+}: {
+  tone?: keyof typeof CALLOUT_TONE;
+  title?: React.ReactNode;
+  children?: React.ReactNode;
+  href?: string;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  const t = CALLOUT_TONE[tone];
+  const body = (
+    <>
+      <t.icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <div className="min-w-0 flex-1">
+        {title ? <p className="font-semibold">{title}</p> : null}
+        {children ? <div className={cn(title && "mt-0.5", "text-muted-foreground")}>{children}</div> : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+      {href ? <ChevronRightIcon className="mt-0.5 size-4 shrink-0" aria-hidden /> : null}
+    </>
+  );
+  const cls = cn("flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] text-foreground", t.cls, className);
+  return href ? (
+    <Link href={href} className={cn(cls, "transition-opacity hover:opacity-90")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
+}
+
+const TONE_ICON: Record<Tone, string> = {
+  neutral: "text-muted-foreground",
+  info: "text-info",
+  success: "text-success",
+  warning: "text-warning",
+  error: "text-error",
+  faint: "text-faint",
+  brand: "text-brand",
+};
+
+// ---------------------------------------------------------------------------
+// KpiCard — every metric states its definition and period; "unavailable" is a
+// first-class state, never a fake zero.
+// ---------------------------------------------------------------------------
+
+export function KpiCard({
+  label,
+  value,
+  sub,
+  definition,
+  delta,
+  goodWhen = "up",
+  unavailable,
+  loading,
+  icon: Icon,
+  href,
+  tone,
+}: {
+  label: string;
+  value: React.ReactNode;
+  /** Period / context line, e.g. "last 7 days". */
+  sub?: React.ReactNode;
+  /** What the number means and where it comes from (shown on hover). */
+  definition?: string;
+  /** Change vs the previous period, as a ratio (0.12 = +12%). */
+  delta?: number | null;
+  goodWhen?: "up" | "down";
+  /** Reason the metric can't be shown — rendered instead of a value. */
+  unavailable?: string | null;
+  loading?: boolean;
+  icon?: LucideIcon;
+  href?: string;
+  tone?: Tone;
+}) {
+  const deltaGood = delta == null ? null : goodWhen === "up" ? delta >= 0 : delta <= 0;
+  const inner = (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          {Icon ? <Icon className={cn("size-3.5", tone ? TONE_ICON[tone] : "text-faint")} aria-hidden /> : null}
+          {label}
+        </span>
+        {definition ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span
+                  tabIndex={0}
+                  className="relative z-10 grid size-4 cursor-help place-items-center rounded-full text-faint hover:text-foreground"
+                  aria-label={`About ${label}`}
+                >
+                  <InfoIcon className="size-3.5" />
+                </span>
+              }
+            />
+            <TooltipContent className="max-w-64">{definition}</TooltipContent>
+          </Tooltip>
+        ) : null}
+      </div>
+      <div className="mt-1.5 min-h-7">
+        {loading ? (
+          <Skeleton className="h-7 w-24" />
+        ) : unavailable ? (
+          <p className="text-sm text-faint">{unavailable}</p>
+        ) : (
+          <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">
+            {typeof value === "string" ? <RollingNumber value={value} /> : value}
+          </p>
+        )}
+      </div>
+      <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+        {!loading && !unavailable && delta != null ? (
+          <span className={cn("inline-flex items-center gap-0.5 font-medium", deltaGood ? "text-success" : "text-error")}>
+            {delta >= 0 ? <ArrowUpRightIcon className="size-3" /> : <ArrowDownRightIcon className="size-3" />}
+            {`${delta >= 0 ? "+" : ""}${(delta * 100).toFixed(1)}%`}
+          </span>
+        ) : null}
+        {sub ? <span className="truncate text-faint">{sub}</span> : null}
+      </div>
+    </>
+  );
+  const cls = "tile relative block p-3";
+  return href ? (
+    <Link href={href} className={cn(cls, "tile-link")}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls}>{inner}</div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StatusTriplet — job · run outcome · delivery, never collapsed into one.
+// ---------------------------------------------------------------------------
+
+export function StatusTriplet({
+  jobStatus,
+  runStatus,
+  delivery,
+  className,
+}: {
+  jobStatus: string;
+  runStatus: string | null;
+  delivery: { status: string; error?: string | null; attempt?: number } | null;
+  className?: string;
+}) {
+  return (
+    <dl className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs", className)}>
+      <div className="flex items-center gap-1.5">
+        <dt className="text-faint">Job</dt>
+        <dd>
+          <AnyStatusBadge value={jobStatus} />
+        </dd>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <dt className="text-faint">Outcome</dt>
+        <dd>{runStatus ? <AnyStatusBadge value={runStatus} /> : <span className="text-faint">not yet</span>}</dd>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <dt className="text-faint">Delivery</dt>
+        <dd>{delivery ? <DeliveryBadge delivery={delivery} /> : <span className="text-faint">none recorded</span>}</dd>
+      </div>
+    </dl>
+  );
+}
+
+const TONE_TEXT: Record<Tone, string> = {
+  neutral: "text-muted-foreground bg-raised",
+  info: "text-info bg-info-bg",
+  success: "text-success bg-success-bg",
+  warning: "text-warning bg-warning-bg",
+  error: "text-error bg-error-bg",
+  faint: "text-faint bg-transparent",
+  brand: "text-brand bg-brand-muted",
+};
+
+/** A delivery effect's state, with "retry scheduled" distinguished from a first attempt. */
+export function DeliveryBadge({
+  delivery,
+  className,
+}: {
+  delivery: { status: string; error?: string | null; attempt?: number };
+  className?: string;
+}) {
+  const tone = deliveryTone(delivery);
+  return (
+    <span
+      className={cn(
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] px-1.5 text-[11px] font-medium whitespace-nowrap",
+        TONE_TEXT[tone],
+        className,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", TONE_BG[tone])} aria-hidden />
+      {deliveryLabel(delivery)}
+    </span>
+  );
+}
+
+/** A small colored dot for a tone (lists, legends). */
+export function ToneDot({ tone, className }: { tone: Tone; className?: string }) {
+  return <span className={cn("inline-block size-2 shrink-0 rounded-full", TONE_BG[tone], className)} aria-hidden />;
+}
+
+// ---------------------------------------------------------------------------
+// Breadcrumbs + Facts
+// ---------------------------------------------------------------------------
+
+export function Breadcrumbs({ items }: { items: Array<{ label: string; href?: string }> }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+        {items.map((it, i) => (
+          <li key={`${it.label}-${i}`} className="flex items-center gap-1">
+            {i > 0 ? <ChevronRightIcon className="size-3 text-faint" aria-hidden /> : null}
+            {it.href ? (
+              <Link href={it.href} className="hover:text-foreground">
+                {it.label}
+              </Link>
+            ) : (
+              <span className="font-mono text-foreground" aria-current="page">
+                {it.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+export interface Fact {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+}
+
+export function FactGrid({ facts, className }: { facts: Fact[]; className?: string }) {
+  return (
+    <dl className={cn("grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4", className)}>
+      {facts.map((f) => (
+        <div key={f.label} className="min-w-0 space-y-1">
+          <dt className="text-xs text-faint" title={f.hint}>
+            {f.label}
+          </dt>
+          <dd className="min-w-0 truncate text-sm text-foreground">{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A labelled section inside a page — title, one muted line, optional actions. */
+export function Section({
+  title,
+  description,
+  actions,
+  children,
+  className,
+}: {
+  title: string;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("space-y-3", className)}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        </div>
+        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** "Load more" for keyset-paginated lists. */
+export function CursorPager({
+  hasMore,
+  loading,
+  onLoadMore,
+  count,
+  noun = "rows",
+}: {
+  hasMore: boolean;
+  loading: boolean;
+  onLoadMore: () => void;
+  count: number;
+  noun?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-xs text-faint">
+      <span className="tabular-nums">
+        {count.toLocaleString()} {noun} loaded
+      </span>
+      {hasMore ? (
+        <button
+          type="button"
+          onClick={onLoadMore}
+          disabled={loading}
+          className="rounded-md border border-border bg-surface px-3 py-1.5 font-medium text-foreground transition-colors hover:bg-raised disabled:opacity-50"
+        >
+          {loading ? "Loading…" : "Load more"}
+        </button>
+      ) : (
+        <span>End of results</span>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// HTTP vocabulary: the same method and status marks wherever a request is shown.
+// ---------------------------------------------------------------------------
+
+const METHOD_TONE: Record<string, string> = {
+  GET: "text-info",
+  POST: "text-success",
+  PUT: "text-chart-3",
+  PATCH: "text-chart-5",
+  DELETE: "text-error",
+};
+
+export function MethodMark({ method, className }: { method: string; className?: string }) {
+  return (
+    <span className={cn("inline-block w-11 shrink-0 font-mono text-[11px] font-medium", METHOD_TONE[method] ?? "text-muted-foreground", className)}>
+      {method}
+    </span>
+  );
+}
+
+export function HttpStatus({ status, ok, className }: { status: number | null | undefined; ok?: boolean; className?: string }) {
+  const good = ok ?? (status != null && status >= 200 && status < 300);
+  const warn = !good && (status == null || status === 429 || status >= 500);
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[18px] items-center rounded-[3px] px-1 font-mono text-[11px] font-medium tabular-nums",
+        good ? "bg-success-bg text-success" : warn ? "bg-warning-bg text-warning" : "bg-error-bg text-error",
+        className,
+      )}
+    >
+      {status ?? "no response"}
+    </span>
+  );
+}
+
+/** A row of numbers in one tile, divided by hairlines. Denser than a row of cards. */
+export function StatBand({
+  stats,
+  className,
+}: {
+  stats: Array<{ label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: Tone; href?: string; hint?: string; visual?: React.ReactNode }>;
+  className?: string;
+}) {
+  return (
+    <div className={cn("tile grid overflow-hidden sm:grid-flow-col sm:auto-cols-fr", className)}>
+      {stats.map((s) => {
+        const inner = (
+          <>
+            <p className="truncate text-[11px] text-faint" title={s.hint}>
+              {s.label}
+            </p>
+            <div className="mt-0.5 flex items-center justify-between gap-2">
+              <p
+                className={cn(
+                  "min-w-0 truncate text-[17px] leading-6 font-semibold tracking-tight tabular-nums",
+                  s.tone ? TONE_ICON[s.tone] : "text-foreground",
+                )}
+              >
+                {typeof s.value === "string" ? <RollingNumber value={s.value} /> : s.value}
+              </p>
+              {s.visual ? <span className="w-12 shrink-0">{s.visual}</span> : null}
+            </div>
+            {s.sub ? <p className="truncate text-[11px] text-faint">{s.sub}</p> : null}
+          </>
+        );
+        const cls = "block min-w-0 border-b border-hairline px-3 py-2.5 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0";
+        return s.href ? (
+          <Link key={s.label} href={s.href} className={cn(cls, "transition-colors hover:bg-raised")}>
+            {inner}
+          </Link>
+        ) : (
+          <div key={s.label} className={cls}>
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A titled dashboard panel: the one frame every chart and feed sits in. */
+export function Widget({
+  title,
+  hint,
+  href,
+  action,
+  className,
+  bodyClassName,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  href?: string;
+  action?: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={cn("tile flex min-w-0 flex-col", className)}>
+      <header className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-hairline px-3">
+        <h3 className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-foreground">
+          {href ? (
+            <Link href={href} className="truncate hover:text-brand">
+              {title}
+            </Link>
+          ) : (
+            <span className="truncate">{title}</span>
+          )}
+          {hint ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span tabIndex={0} className="grid size-3.5 cursor-help place-items-center text-faint hover:text-foreground" aria-label={`About ${title}`}>
+                    <InfoIcon className="size-3" />
+                  </span>
+                }
+              />
+              <TooltipContent className="max-w-64">{hint}</TooltipContent>
+            </Tooltip>
+          ) : null}
+        </h3>
+        {action}
+      </header>
+      <div className={cn("min-h-0 flex-1 p-3", bodyClassName)}>{children}</div>
+    </section>
+  );
+}

@@ -1,16 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { toast } from "sonner";
+import { TimeChart } from "@/components/charts/time-chart";
 import {
   Loader2Icon,
   KeyRoundIcon,
@@ -19,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { usdPrecise } from "@/lib/format";
 import { gsap, prefersReducedMotion, animateCounter } from "@/lib/gsap";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -161,10 +154,6 @@ const TYPE_SCALE: {
   { name: "label", px: 13, lh: 18, w: 500, tr: "0", sample: "Field label" },
   { name: "caption", px: 12, lh: 16, w: 500, tr: "0.01em", sample: "Secondary caption text" },
 ];
-
-function usd(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 3 });
-}
 
 /* ---- page ---------------------------------------------------------------- */
 
@@ -405,7 +394,7 @@ export default function DesignSystemPage() {
                     <TableCell className="font-mono">{r.agent}</TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{r.tokens.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">{usd(r.billed)}</TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{usdPrecise(r.billed)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -453,24 +442,14 @@ export default function DesignSystemPage() {
         <Section title="Chart" spec="Warm categorical palette; soft 15%-alpha area fill, no saturated gradients">
           <div className="rounded-xl border border-hairline bg-surface p-4">
             <div className="h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={CHART_DATA} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                  <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="d" stroke="var(--chart-axis)" tick={{ fill: "var(--chart-axis)", fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--chart-axis)" tick={{ fill: "var(--chart-axis)", fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
-                  <RTooltip
-                    cursor={{ stroke: "var(--chart-grid)" }}
-                    contentStyle={{
-                      background: "var(--overlay)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    labelStyle={{ color: "var(--muted-foreground)" }}
-                  />
-                  <Area type="monotone" dataKey="v" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <TimeChart
+                ariaLabel="Sample series"
+                rows={CHART_DATA}
+                xKey="d"
+                series={[{ key: "v", label: "Value", color: "var(--chart-1)" }]}
+                format={(v) => v.toLocaleString()}
+                endValue
+              />
             </div>
           </div>
         </Section>

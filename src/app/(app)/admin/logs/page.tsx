@@ -1,107 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { ScrollTextIcon } from "lucide-react";
 
 import { useAdminLogs } from "@/features/admin/hooks";
-import { usd } from "@/features/invoices/invoice-ui";
+import type { AdminLogRow } from "@/features/admin/admin-log";
+import { useUrlFilters } from "@/lib/url-filters";
+import { dateTime, usdPrecise, tokens, duration } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { AnyStatusBadge } from "@/components/ui/status-badge";
+import { DataTable } from "@/components/ops/data-table";
+import { FilterBar, SelectFilter, SearchFilter } from "@/components/ops/filters";
 
-interface LogRow {
-  _id?: string;
-  ts?: string;
-  projectId?: string;
-  agentType?: string;
-  status?: string;
-  durationMs?: number | null;
-  inputTokens?: number | null;
-  outputTokens?: number | null;
-  billedUsd?: number | null;
-  errorMessage?: string | null;
-}
+const FILTER_KEYS = ["status", "project"] as const;
 
-const ERROR_STATUSES = new Set(["error", "rate_limited", "validation_failed"]);
-
-export default function AdminLogsPage() {
-  const [filter, setFilter] = useState<"all" | "errors">("all");
-  const logs = useAdminLogs(filter === "errors" ? { status: "error" } : {});
-  const rows = (logs.data?.logs ?? []) as LogRow[];
+function AdminLogsInner() {
+  const { values, set, reset, active } = useUrlFilters(FILTER_KEYS);
+  const logs = useAdminLogs({ status: values.status || undefined, projectId: values.project || undefined });
+  const rows = (logs.data?.logs ?? []) as AdminLogRow[];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader
+        size="compact"
         title="Run feed"
-        description="Cross-tenant agent activity (refreshes every 10 seconds)."
-        action={
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as "all" | "errors")}>
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="errors">Errors</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        }
+        description="Cross-tenant priced runs, newest first (refreshes every 10 seconds)."
       />
-
-      {logs.isLoading ? (
-        <Skeleton className="h-64 w-full rounded-xl" />
-      ) : rows.length === 0 ? (
-        <EmptyState icon={ScrollTextIcon} title="Nothing here" description="Runs appear as tenants call agents." />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Tokens</TableHead>
-                <TableHead className="text-right">Billed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((log, i) => {
-                const isError = ERROR_STATUSES.has(log.status ?? "");
-                return (
-                  <TableRow key={log._id ?? i}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {log.ts ? new Date(log.ts).toLocaleString() : "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{log.projectId ?? "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">{log.agentType ?? "—"}</TableCell>
-                    <TableCell>
-                      <span
-                        className={cn("text-sm", isError ? "text-error" : "text-success")}
-                        title={log.errorMessage ?? undefined}
-                      >
-                        {log.status ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {((log.inputTokens ?? 0) + (log.outputTokens ?? 0)).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {log.billedUsd != null ? usd(log.billedUsd) : "—"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <FilterBar active={active} onClear={reset} onRefresh={() => void logs.refetch()} refreshing={logs.isFetching}>
+        <SelectFilter
+          label="Outcome"
+          value={values.status}
+          options={["success", "error", "validation_failed", "rate_limited", "skipped"].map((s) => ({
+            value: s,
+            label: s.replace(/_/g, " "),
+          }))}
+          onChange={(v) => set({ status: v })}
+        />
+        <SearchFilter value={values.project} placeholder="Project ID" onCommit={(v) => set({ project: v })} />
+      </FilterBar>
+      <DataTable
+        rows={rows}
+        getRowKey={(l) => l._id ?? `${l.ts}-${l.projectId}`}
+        getRowHref={(l) => (l._id ? `/admin/logs/${l._id}` : null)}
+        getRowLabel={(l) => `Open log for ${l.projectId} ${l.agentType}`}
+        loading={logs.isLoading}
+        error={logs.isError ? { message: "Couldn't load the run feed.", onRetry: () => void logs.refetch() } : null}
+        empty={<EmptyState icon={ScrollTextIcon} title="Nothing here" description="Runs appear as tenants call agents." />}
+        columns={[
+          { id: "ts", header: "Time", cell: (l) => <span className="text-muted-foreground">{dateTime(l.ts)}</span> },
+          { id: "project", header: "Project", cell: (l) => <span className="font-mono text-xs">{l.projectId ?? "—"}</span> },
+          { id: "agent", header: "Agent", cell: (l) => <span className="font-mono text-xs">{l.agentType ?? "—"}</span> },
+          { id: "status", header: "Outcome", cell: (l) => <AnyStatusBadge value={l.status} /> },
+          {
+            id: "tokens",
+            header: "Tokens",
+            align: "right",
+            cell: (l) => tokens((l.inputTokens ?? 0) + (l.outputTokens ?? 0) + (l.embeddingTokens ?? 0)),
+          },
+          { id: "dur", header: "Duration", align: "right", cell: (l) => <span className="text-muted-foreground">{duration(l.durationMs)}</span> },
+          { id: "billed", header: "Billed", align: "right", cell: (l) => usdPrecise(l.billedUsd) },
+        ]}
+      />
     </div>
+  );
+}
+
+export default function AdminLogsPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+      <AdminLogsInner />
+    </Suspense>
   );
 }

@@ -17,9 +17,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ops/data-table";
+import { relativeTime } from "@/lib/format";
 
 export default function SupportPage() {
-  const { projectId } = useProjectScope();
+  const { orgId, projectId } = useProjectScope();
   const tickets = useTickets(projectId);
   const create = useCreateTicket(projectId);
   const [subject, setSubject] = useState("");
@@ -101,28 +103,27 @@ export default function SupportPage() {
               description="Anything you open from this project shows up here with its status."
             />
           ) : (
-            <div className="space-y-2">
-              {rows.map((t) => (
-                <details key={t._id} className="group rounded-xl border border-border bg-surface px-4 py-3">
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+            <DataTable
+              rows={rows}
+              getRowKey={(t) => t._id}
+              getRowHref={(t) => `/o/${orgId}/p/${projectId}/support/${t._id}`}
+              getRowLabel={(t) => `Open ticket ${t.subject}`}
+              columns={[
+                {
+                  id: "subject",
+                  header: "Subject",
+                  className: "max-w-72",
+                  cell: (t) => (
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{t.subject}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t.createdAt ? t.createdAt.toLocaleString() : "—"}
-                      </p>
+                      <p className="truncate font-medium text-foreground">{t.subject}</p>
+                      {t.adminNotes ? <p className="text-[11px] text-brand">Support replied</p> : null}
                     </div>
-                    <StatusBadge status={t.status} />
-                  </summary>
-                  <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{t.message}</p>
-                  {t.adminNotes ? (
-                    <div className="mt-3 rounded-lg bg-brand-muted px-3 py-2 text-sm text-foreground">
-                      <p className="text-xs font-medium text-brand">Reply from support</p>
-                      <p className="mt-1 whitespace-pre-wrap">{t.adminNotes}</p>
-                    </div>
-                  ) : null}
-                </details>
-              ))}
-            </div>
+                  ),
+                },
+                { id: "status", header: "Status", cell: (t) => <StatusBadge status={t.status} /> },
+                { id: "opened", header: "Opened", cell: (t) => <span className="text-muted-foreground">{relativeTime(t.createdAt)}</span> },
+              ]}
+            />
           )}
         </section>
       </div>

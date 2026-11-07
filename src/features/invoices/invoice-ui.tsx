@@ -20,20 +20,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, type Column } from "@/components/ops/data-table";
 import { ApiError } from "@/api/client";
 import type { Invoice } from "@/types";
 
-export function usd(n: number) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
-}
+import { usd } from "@/lib/format";
 
 export function periodLabel(inv: Invoice) {
   return inv.periodStart.toLocaleDateString("en-US", {
@@ -41,77 +32,6 @@ export function periodLabel(inv: Invoice) {
     year: "numeric",
     timeZone: "UTC",
   });
-}
-
-// ---------------------------------------------------------------------------
-// Detail dialog — line items + payment trail
-// ---------------------------------------------------------------------------
-
-export function InvoiceDetailDialog({
-  invoice,
-  open,
-  onOpenChange,
-}: {
-  invoice: Invoice | null;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
-  if (!invoice) return null;
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="font-mono text-base">{invoice.invoiceNumber}</DialogTitle>
-          <DialogDescription>
-            {periodLabel(invoice)} · <span className="font-mono">{invoice.projectId}</span>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex items-center justify-between">
-          <StatusBadge status={invoice.status as Status} />
-          <p className="text-lg font-medium tabular-nums text-foreground">
-            {usd(invoice.totalBilledUsd)}
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Agent</TableHead>
-                <TableHead className="text-right">Runs</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-                <TableHead className="text-right">Billed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice.lineItems.map((li) => (
-                <TableRow key={li.agentType}>
-                  <TableCell className="font-mono text-xs">{li.agentType}</TableCell>
-                  <TableCell className="text-right tabular-nums">{li.runs}</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {usd(li.costUsd)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{usd(li.billedUsd)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {invoice.paymentReference ? (
-          <p className="text-sm text-muted-foreground">
-            Payment reference: <span className="font-mono">{invoice.paymentReference}</span>
-            {invoice.paidAt
-              ? ` · paid ${invoice.paidAt.toLocaleDateString()}`
-              : invoice.paymentSubmittedAt
-                ? ` · submitted ${invoice.paymentSubmittedAt.toLocaleDateString()}`
-                : null}
-          </p>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -211,76 +131,55 @@ export function SubmitPaymentDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Invoice table (shared by org billing + project invoices)
+// Invoice table (shared by org billing + project invoices). Each row opens the
+// invoice's own page; "Pay" is an in-row control that never navigates.
 // ---------------------------------------------------------------------------
 
 export function InvoiceTable({
   invoices,
+  hrefFor,
   showProject = false,
   canSubmitPayment = false,
 }: {
   invoices: Invoice[];
+  /** The invoice page for a row (project-scoped route). */
+  hrefFor: (inv: Invoice) => string;
   showProject?: boolean;
   /** Org owners see a Pay action on issued invoices. */
   canSubmitPayment?: boolean;
 }) {
-  const [detail, setDetail] = useState<Invoice | null>(null);
   const [paying, setPaying] = useState<Invoice | null>(null);
+
+  const columns: Column<Invoice>[] = [
+    { id: "number", header: "Invoice", cell: (inv) => <span className="font-mono text-xs text-foreground">{inv.invoiceNumber}</span> },
+    ...(showProject
+      ? [{ id: "project", header: "Project", cell: (inv: Invoice) => <span className="font-mono text-xs text-muted-foreground">{inv.projectId}</span> }]
+      : []),
+    { id: "period", header: "Period", cell: (inv) => periodLabel(inv) },
+    { id: "total", header: "Total", align: "right", cell: (inv) => usd(inv.totalBilledUsd) },
+    { id: "status", header: "Status", cell: (inv) => <StatusBadge status={inv.status as Status} /> },
+    {
+      id: "actions",
+      header: "",
+      align: "right",
+      interactive: true,
+      cell: (inv) =>
+        canSubmitPayment && inv.status === "issued" ? (
+          <Button size="xs" onClick={() => setPaying(inv)}>
+            Pay
+          </Button>
+        ) : null,
+    },
+  ];
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice</TableHead>
-              {showProject ? <TableHead>Project</TableHead> : null}
-              <TableHead>Period</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {invoices.map((inv) => (
-              <TableRow key={inv.invoiceNumber}>
-                <TableCell className="font-mono text-xs">{inv.invoiceNumber}</TableCell>
-                {showProject ? (
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {inv.projectId}
-                  </TableCell>
-                ) : null}
-                <TableCell>{periodLabel(inv)}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {usd(inv.totalBilledUsd)}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={inv.status as Status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setDetail(inv)}>
-                      View
-                    </Button>
-                    {canSubmitPayment && inv.status === "issued" ? (
-                      <Button size="sm" onClick={() => setPaying(inv)}>
-                        Pay
-                      </Button>
-                    ) : null}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <InvoiceDetailDialog
-        invoice={detail}
-        open={!!detail}
-        onOpenChange={(o) => {
-          if (!o) setDetail(null);
-        }}
+      <DataTable
+        rows={invoices}
+        columns={columns}
+        getRowKey={(inv) => inv.invoiceNumber}
+        getRowHref={hrefFor}
+        getRowLabel={(inv) => `Open invoice ${inv.invoiceNumber}`}
       />
       <SubmitPaymentDialog
         invoice={paying}

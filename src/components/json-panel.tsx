@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { CheckIcon, CopyIcon } from "lucide-react";
-import { toast } from "sonner";
-
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { highlight } from "@/lib/highlight";
+import { CopyButton } from "@/components/code-block";
 
 /**
  * Read-only JSON viewer for run outputs, held deliveries and attested schemas.
@@ -25,44 +22,21 @@ export function JsonPanel({
   className?: string;
   maxHeight?: string;
 }) {
-  const [copied, setCopied] = useState(false);
   const isEmpty = value === null || value === undefined;
-  const text = isEmpty ? "" : typeof value === "string" ? value : JSON.stringify(value, null, 2);
-
-  function copy() {
-    void navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => toast.error("Couldn't copy — select the text manually"));
-  }
+  const isString = typeof value === "string";
+  const text = isEmpty ? "" : isString ? (value as string) : JSON.stringify(value, null, 2);
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-border", className)}>
-      <div className="flex items-center justify-between gap-2 border-b border-border bg-raised px-3 py-1.5">
-        <span className="truncate font-mono text-xs text-faint">{label ?? "json"}</span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Copy JSON"
-          onClick={copy}
-          disabled={isEmpty}
-        >
-          {copied ? <CheckIcon className="text-success" /> : <CopyIcon />}
-        </Button>
+    <div className={cn("overflow-hidden rounded-xl border border-border bg-canvas", className)}>
+      <div className="flex h-8 items-center justify-between gap-2 border-b border-border bg-surface pr-1 pl-3">
+        <span className="truncate font-mono text-[11px] text-faint">{label ?? "json"}</span>
+        {isEmpty ? null : <CopyButton text={text} />}
       </div>
       {isEmpty ? (
-        <p className="bg-surface px-4 py-3 text-sm text-muted-foreground">{empty}</p>
+        <p className="px-3.5 py-3 text-[13px] text-muted-foreground">{empty}</p>
       ) : (
-        <pre
-          className={cn(
-            "overflow-auto bg-surface p-4 font-mono text-xs leading-relaxed text-muted-foreground",
-            maxHeight,
-          )}
-        >
-          {text}
+        <pre className={cn("overflow-auto p-3.5 font-mono text-[12px] leading-[1.65] text-foreground/85", maxHeight)}>
+          <code>{highlight(text, isString ? "text" : "json")}</code>
         </pre>
       )}
     </div>

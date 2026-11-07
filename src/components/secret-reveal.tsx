@@ -46,13 +46,16 @@ export function SecretReveal({
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Reset transient UI each time the modal opens.
-  useEffect(() => {
+  // Reset transient UI each time the modal opens — adjusted during render (the
+  // React "store previous prop" pattern) rather than in an effect.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setRevealed(false);
       setCopied(false);
     }
-  }, [open]);
+  }
 
   useEffect(() => {
     if (!copied) return;
@@ -82,7 +85,7 @@ export function SecretReveal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2.5">
+        <div className="flex items-start gap-2 tile px-3 py-2.5">
           <code
             className={cn(
               "min-w-0 flex-1 font-mono text-sm leading-relaxed break-all",

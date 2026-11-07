@@ -12,20 +12,16 @@ import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useCatalog, useAgentRequests, useCreateAgentRequest } from "@/features/projects/hooks";
 import { RoleGate } from "@/features/orgs/org-context";
 import { RequestTimeline } from "@/features/agents/request-timeline";
-import { CapabilityBadges, POLICY_META } from "@/features/agents/capability-badges";
-import { AGENT_TRAITS, TRAIT_META } from "@/data/agent-traits";
-import { parseEndpoint } from "@/lib/catalog";
-import type { CatalogEntry } from "@/types";
+import { CapabilityBadges } from "@/features/agents/capability-badges";
+import { categoryOf } from "@/features/canvas/tiles";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
-import { CodeBlock } from "@/components/code-block";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -34,12 +30,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ApiError } from "@/api/client";
 
 const CATEGORIES = ["all", "seo", "content", "analysis", "elearning", "vision"] as const;
-
-const pretty = (v: unknown) => JSON.stringify(v, null, 2);
 
 const RequestSchema = z.object({
   title: z.string().min(1, "Give it a short title").max(120),
@@ -126,131 +119,20 @@ function RequestAgentDialog({
   );
 }
 
-/** Read-only reference drawer for a single catalog agent. */
-function AgentDetailSheet({
-  entry,
-  docsHref,
-  playgroundHref,
-  onOpenChange,
-}: {
-  entry: CatalogEntry | null;
-  docsHref: string;
-  playgroundHref: string;
-  onOpenChange: (o: boolean) => void;
-}) {
-  const policies = entry
-    ? ([
-        entry.riskTier === "high" ? "approval" : null,
-        entry.dataClass === "protected" ? "protected" : null,
-        entry.toolsEnabled ? "tools" : null,
-      ].filter(Boolean) as Array<keyof typeof POLICY_META>)
-    : [];
-  const traits = entry ? AGENT_TRAITS[entry.agentType] ?? [] : [];
-  return (
-    <Sheet open={!!entry} onOpenChange={(o) => !o && onOpenChange(false)}>
-      <SheetContent side="right" className="w-full gap-0 overflow-y-auto sm:max-w-md">
-        {entry ? (
-          <>
-            <SheetHeader>
-              <div className="flex items-center justify-between gap-2 pr-8">
-                <SheetTitle>{entry.name}</SheetTitle>
-                {entry.enabledForProject ? (
-                  <Badge className="bg-success-bg text-success">Enabled</Badge>
-                ) : (
-                  <Badge variant="secondary">Not enabled</Badge>
-                )}
-              </div>
-              <SheetDescription className="font-mono text-xs">{entry.agentType}</SheetDescription>
-            </SheetHeader>
-            <div className="space-y-5 p-4 pt-0">
-              <p className="text-sm text-muted-foreground">{entry.description}</p>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-faint">How it runs</p>
-                <dl className="divide-y divide-border rounded-lg border border-border bg-surface text-sm">
-                  <div className="flex justify-between gap-3 px-3 py-2">
-                    <dt className="text-muted-foreground">Model</dt>
-                    <dd className="font-mono text-xs text-foreground">{entry.model ?? "platform default"}</dd>
-                  </div>
-                  <div className="flex justify-between gap-3 px-3 py-2">
-                    <dt className="text-muted-foreground">Output budget</dt>
-                    <dd className="tabular-nums text-foreground">
-                      {(entry.maxTokens ?? entry.typicalMaxTokens).toLocaleString()} tokens
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3 px-3 py-2">
-                    <dt className="text-muted-foreground">Delivers</dt>
-                    <dd className="font-mono text-xs text-foreground">
-                      {entry.callbackMethod} {entry.callbackPath}
-                    </dd>
-                  </div>
-                  {policies.map((p) => {
-                    const { icon: Icon, label, hint } = POLICY_META[p];
-                    return (
-                      <div key={p} className="flex items-start gap-2 px-3 py-2">
-                        <Icon className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />
-                        <div>
-                          <dt className="font-medium text-foreground">{label}</dt>
-                          <dd className="text-xs text-muted-foreground">{hint}</dd>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {traits.map((t) => (
-                    <div key={t} className="px-3 py-2">
-                      <dt className="font-medium text-foreground">{TRAIT_META[t].label}</dt>
-                      <dd className="text-xs text-muted-foreground">{TRAIT_META[t].hint}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-faint">Request</p>
-                <CodeBlock
-                  label={`${parseEndpoint(entry.endpoint).method} ${parseEndpoint(entry.endpoint).path}`}
-                  code={pretty(entry.requestExample)}
-                />
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-faint">Callback</p>
-                <CodeBlock
-                  label={`${entry.callbackMethod} <your-app>${entry.callbackPath}`}
-                  code={pretty(entry.callbackExample)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  render={<Link href={docsHref}>Integration guide</Link>}
-                />
-                <Button
-                  size="sm"
-                  disabled={!entry.enabledForProject}
-                  render={<Link href={playgroundHref}>Try in playground</Link>}
-                />
-              </div>
-            </div>
-          </>
-        ) : null}
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 export default function AgentsPage() {
   const { orgId, projectId } = useProjectScope();
   const catalog = useCatalog(projectId);
   const requests = useAgentRequests(projectId);
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("all");
   const [requestOpen, setRequestOpen] = useState(false);
-  const [selected, setSelected] = useState<CatalogEntry | null>(null);
 
   const entries =
     catalog.data?.catalog.filter((e) => category === "all" || e.category === category) ?? [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader
+        size="compact"
         title="Agents"
         description="Production agents, each with a typed request, a validated output and a callback contract. Enabled agents run on this project today."
         action={
@@ -266,8 +148,8 @@ export default function AgentsPage() {
       <Tabs value={category} onValueChange={(v) => setCategory(v as (typeof CATEGORIES)[number])}>
         <TabsList>
           {CATEGORIES.map((c) => (
-            <TabsTrigger key={c} value={c} className="capitalize">
-              {c === "elearning" ? "E-learning" : c}
+            <TabsTrigger key={c} value={c}>
+              {c === "all" ? "All" : categoryOf(c).label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -282,40 +164,31 @@ export default function AgentsPage() {
       ) : catalog.isError ? (
         <QueryError message="Couldn't load the catalog." onRetry={() => void catalog.refetch()} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {entries.map((e) => (
-            <Card
-              key={e.agentType}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelected(e)}
-              onKeyDown={(ev) => {
-                if (ev.key === "Enter" || ev.key === " ") {
-                  ev.preventDefault();
-                  setSelected(e);
-                }
-              }}
-              className="flex h-full cursor-pointer flex-col transition-colors hover:border-strong"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{e.name}</CardTitle>
-                  {e.enabledForProject ? (
-                    <Badge className="shrink-0 bg-success-bg text-success">Enabled</Badge>
-                  ) : (
-                    <Badge variant="secondary" className="shrink-0">
-                      Not enabled
-                    </Badge>
-                  )}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {entries.map((e) => {
+            const Cat = categoryOf(e.category).icon;
+            return (
+              <Link
+                key={e.agentType}
+                href={`/o/${orgId}/p/${projectId}/agents/${e.agentType}`}
+                className={cn("tile tile-link flex h-full flex-col p-3.5 outline-none focus-visible:border-brand", !e.enabledForProject && "bg-transparent")}
+              >
+                <div className="flex items-start gap-2">
+                  <Cat className={cn("mt-0.5 size-4 shrink-0", e.enabledForProject ? "text-brand" : "text-faint")} strokeWidth={1.75} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] leading-[18px] font-semibold text-foreground">{e.name}</p>
+                    <p className="truncate font-mono text-[11px] text-faint">{e.agentType}</p>
+                  </div>
+                  {e.enabledForProject ? <span className="mt-1 size-1.5 shrink-0 rounded-full bg-success" title="Enabled" aria-label="Enabled" /> : null}
                 </div>
-                <CardDescription className="font-mono text-xs">{e.agentType}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-between gap-3">
-                <p className="line-clamp-3 text-sm text-muted-foreground">{e.description}</p>
-                <CapabilityBadges entry={e} />
-              </CardContent>
-            </Card>
-          ))}
+                <p className="mt-2 line-clamp-3 flex-1 text-xs leading-relaxed text-muted-foreground">{e.description}</p>
+                <div className="mt-2.5 flex min-h-5 items-center justify-between gap-2">
+                  <CapabilityBadges entry={e} compact />
+                  {e.enabledForProject ? null : <span className="ml-auto text-[11px] text-faint">Not enabled</span>}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
       {!catalog.isLoading && !catalog.isError && entries.length === 0 ? (
@@ -323,7 +196,7 @@ export default function AgentsPage() {
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-faint">Your agent requests</h2>
+        <h2 className="kicker">Your agent requests</h2>
         {requests.isLoading ? (
           <Skeleton className="h-24 w-full rounded-xl" />
         ) : requests.isError ? (
@@ -334,16 +207,17 @@ export default function AgentsPage() {
         ) : requests.data && requests.data.requests.length > 0 ? (
           <div className="space-y-2">
             {requests.data.requests.map((r) => (
-              <div
+              <Link
                 key={r._id}
-                className="space-y-3 rounded-xl border border-border bg-surface px-4 py-3"
+                href={`/o/${orgId}/p/${projectId}/agents/requests/${r._id}`}
+                className="block space-y-3 tile px-4 py-3 transition-colors hover:border-strong"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
                   <p className="truncate text-sm text-muted-foreground">{r.description}</p>
                 </div>
                 <RequestTimeline status={r.status ?? "pending"} />
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
@@ -355,12 +229,6 @@ export default function AgentsPage() {
       </section>
 
       <RequestAgentDialog open={requestOpen} onOpenChange={setRequestOpen} />
-      <AgentDetailSheet
-        entry={selected}
-        docsHref={`/o/${orgId}/p/${projectId}/docs`}
-        playgroundHref={`/o/${orgId}/p/${projectId}/playground?agent=${selected?.agentType ?? ""}`}
-        onOpenChange={(o) => !o && setSelected(null)}
-      />
     </div>
   );
 }

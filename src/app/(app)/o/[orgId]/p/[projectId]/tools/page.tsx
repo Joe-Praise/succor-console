@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   KeyRoundIcon,
@@ -27,11 +28,11 @@ import {
   useUpdateMcpServer,
 } from "@/features/tools/hooks";
 import { RoleGate, useOrgCtx } from "@/features/orgs/org-context";
-import { ApiError } from "@/api/client";
+import { CLASS_COPY, errMessage } from "@/features/tools/copy";
 import { cn } from "@/lib/utils";
 import { SIDE_EFFECT_CLASSES, type McpServer, type SideEffectClass } from "@/types";
 import { PageHeader } from "@/components/page-header";
-import { JsonPanel } from "@/components/json-panel";
+import { DataTable } from "@/components/ops/data-table";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,24 +58,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/** Grant refusal reasons → plain language (agent-service lib/tool-grants.ts). */
-const REFUSAL_COPY: Record<string, string> = {
-  "unknown-agent": "That agent isn't in the catalog.",
-  "agent-not-enabled": "That agent isn't enabled on this project.",
-  "server-not-found": "That server doesn't exist in this project.",
-  "server-disabled": "That server is disabled — enable it first.",
-  "tool-not-exposed": "The server's allowlist doesn't expose that tool.",
-  "invalid-schema": "The parameters schema isn't a valid, object-shaped JSON Schema.",
-  duplicate: "An active grant for this agent + server + tool already exists.",
-};
-
-const CLASS_COPY: Record<SideEffectClass, { label: string; note: string; runnable: boolean }> = {
-  READ_ONLY: { label: "Read-only", note: "Executable. The only class the runtime will call.", runnable: true },
-  IDEMPOTENT_WRITE: { label: "Idempotent write", note: "Recorded, not yet runnable.", runnable: false },
-  NON_IDEMPOTENT_WRITE: { label: "Non-idempotent write", note: "Recorded, not runnable.", runnable: false },
-  UNKNOWN: { label: "Unknown", note: "Refused at execution.", runnable: false },
-};
-
 const SCHEMA_TEMPLATE = `{
   "type": "object",
   "properties": {
@@ -83,15 +66,6 @@ const SCHEMA_TEMPLATE = `{
   "required": ["courseId"],
   "additionalProperties": false
 }`;
-
-function errMessage(err: unknown, fallback: string) {
-  if (err instanceof ApiError) {
-    const reason = (err.data as { reason?: string } | undefined)?.reason;
-    if (reason && REFUSAL_COPY[reason]) return REFUSAL_COPY[reason];
-    return err.message;
-  }
-  return fallback;
-}
 
 // ---------------------------------------------------------------------------
 // MCP servers
@@ -246,7 +220,7 @@ function RotateTokenDialog({
 }
 
 function ServersSection() {
-  const { projectId } = useProjectScope();
+  const { orgId, projectId } = useProjectScope();
   const { role } = useOrgCtx();
   const servers = useMcpServers(projectId);
   const update = useUpdateMcpServer(projectId);
@@ -284,7 +258,15 @@ function ServersSection() {
       ) : (
         <div className="space-y-2">
           {rows.map((s) => (
-            <div key={s.id} className="rounded-xl border border-border bg-surface p-4">
+            <div
+              key={s.id}
+              className="relative tile p-4 transition-colors hover:border-strong focus-within:border-strong"
+            >
+              <Link
+                href={`/o/${orgId}/p/${projectId}/tools/servers/${s.id}`}
+                aria-label={`Open MCP server ${s.name}`}
+                className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              />
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -300,7 +282,7 @@ function ServersSection() {
                   <p className="mt-0.5 font-mono text-[11px] text-faint">id {s.id}</p>
                 </div>
                 {isAdmin ? (
-                  <div className="flex items-center gap-2">
+                  <div className="relative z-10 flex items-center gap-2">
                     <Switch
                       checked={s.enabled}
                       aria-label={s.enabled ? "Disable server" : "Enable server"}
@@ -530,20 +512,18 @@ function IssueGrantDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
 }
 
 function GrantsSection() {
-  const { projectId } = useProjectScope();
+  const { orgId, projectId } = useProjectScope();
   const { role } = useOrgCtx();
   const grants = useToolGrants(projectId);
   const servers = useMcpServers(projectId);
   const revoke = useRevokeToolGrant(projectId);
   const [issueOpen, setIssueOpen] = useState(false);
-  const [inspect, setInspect] = useState<string | null>(null);
   const isAdmin = role !== "developer";
 
   const serverName = (id: string) => servers.data?.servers.find((s) => s.id === id)?.name ?? `…${id.slice(-6)}`;
   const rows = grants.data?.grants ?? [];
   const active = rows.filter((g) => !g.revokedAt);
   const revoked = rows.filter((g) => g.revokedAt);
-  const inspected = rows.find((g) => g.id === inspect) ?? null;
 
   return (
     <section className="space-y-4">
@@ -574,86 +554,66 @@ function GrantsSection() {
           description="Agents can't see any tool until a project admin grants it here."
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-raised text-left text-xs text-faint">
-              <tr>
-                <th className="px-4 py-2 font-medium">Agent</th>
-                <th className="px-4 py-2 font-medium">Server · tool</th>
-                <th className="px-4 py-2 font-medium">Class</th>
-                <th className="px-4 py-2 font-medium">Granted by</th>
-                <th className="px-4 py-2 font-medium">State</th>
-                <th className="px-4 py-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-surface">
-              {[...active, ...revoked].map((g) => (
-                <tr key={g.id} className={cn(g.revokedAt && "opacity-60")}>
-                  <td className="px-4 py-2.5 font-mono text-xs">{g.agentType}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                    {serverName(g.serverId)} · {g.toolName}
-                  </td>
-                  <td className="px-4 py-2.5 text-xs">
-                    <span
-                      className={cn(
-                        "rounded-md px-1.5 py-0.5",
-                        g.sideEffectClass === "READ_ONLY" ? "bg-success-bg text-success" : "bg-raised text-muted-foreground",
-                      )}
-                    >
-                      {CLASS_COPY[g.sideEffectClass as SideEffectClass]?.label ?? g.sideEffectClass}
-                    </span>
-                  </td>
-                  <td className="max-w-40 truncate px-4 py-2.5 font-mono text-[11px] text-faint" title={g.grantedBy}>
-                    {g.grantedBy}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <StatusBadge status={g.revokedAt ? "revoked" : "active"} />
-                  </td>
-                  <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                    <Button variant="ghost" size="xs" onClick={() => setInspect(g.id)}>
-                      Schema
-                    </Button>
-                    {isAdmin && !g.revokedAt ? (
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className="text-error"
-                        onClick={() => {
-                          if (!window.confirm(`Revoke ${g.agentType} → ${g.toolName}?`)) return;
-                          revoke.mutate(g.id, {
-                            onSuccess: () => toast.success("Grant revoked"),
-                            onError: (err) => toast.error(errMessage(err, "Revoke failed")),
-                          });
-                        }}
-                      >
-                        Revoke
-                      </Button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={[...active, ...revoked]}
+          getRowKey={(g) => g.id}
+          getRowHref={(g) => `/o/${orgId}/p/${projectId}/tools/grants/${g.id}`}
+          getRowLabel={(g) => `Open grant ${g.agentType} → ${g.toolName}`}
+          columns={[
+            { id: "agent", header: "Agent", cell: (g) => <span className={cn("font-mono text-xs", g.revokedAt && "opacity-60")}>{g.agentType}</span> },
+            {
+              id: "tool",
+              header: "Server · tool",
+              cell: (g) => (
+                <span className="font-mono text-xs text-muted-foreground">
+                  {serverName(g.serverId)} · {g.toolName}
+                </span>
+              ),
+            },
+            {
+              id: "class",
+              header: "Class",
+              cell: (g) => (
+                <span
+                  className={cn(
+                    "rounded-md px-1.5 py-0.5 text-xs",
+                    g.sideEffectClass === "READ_ONLY" ? "bg-success-bg text-success" : "bg-raised text-muted-foreground",
+                  )}
+                >
+                  {CLASS_COPY[g.sideEffectClass as SideEffectClass]?.label ?? g.sideEffectClass}
+                </span>
+              ),
+            },
+            { id: "by", header: "Granted by", cell: (g) => <span className="block max-w-40 truncate font-mono text-[11px] text-faint">{g.grantedBy}</span> },
+            { id: "state", header: "State", cell: (g) => <StatusBadge status={g.revokedAt ? "revoked" : "active"} /> },
+            {
+              id: "actions",
+              header: "",
+              align: "right",
+              interactive: true,
+              cell: (g) =>
+                isAdmin && !g.revokedAt ? (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="text-error"
+                    onClick={() => {
+                      if (!window.confirm(`Revoke ${g.agentType} → ${g.toolName}?`)) return;
+                      revoke.mutate(g.id, {
+                        onSuccess: () => toast.success("Grant revoked"),
+                        onError: (err) => toast.error(errMessage(err, "Revoke failed")),
+                      });
+                    }}
+                  >
+                    Revoke
+                  </Button>
+                ) : null,
+            },
+          ]}
+        />
       )}
 
       <IssueGrantDialog open={issueOpen} onOpenChange={setIssueOpen} />
-      <Dialog open={!!inspected} onOpenChange={(o) => !o && setInspect(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Attested argument schema</DialogTitle>
-            <DialogDescription>
-              {inspected ? `${inspected.agentType} → ${inspected.toolName}` : ""} — the shape the model is
-              shown, as the granting admin attested it.
-            </DialogDescription>
-          </DialogHeader>
-          <JsonPanel
-            value={inspected?.parametersJsonSchema ?? null}
-            label="parametersJsonSchema"
-            empty="No schema on this legacy grant — it can never become a capability."
-          />
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

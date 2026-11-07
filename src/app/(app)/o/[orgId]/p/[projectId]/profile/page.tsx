@@ -305,7 +305,7 @@ function ProfileEditor({ initial, canEdit }: { initial: Profile; canEdit: boolea
           </CardHeader>
           <CardContent>
             {block ? (
-              <pre className="max-h-96 overflow-auto rounded-lg border border-border bg-surface p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
+              <pre className="max-h-96 overflow-auto tile p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-muted-foreground">
                 {block}
               </pre>
             ) : (
@@ -321,7 +321,7 @@ function ProfileEditor({ initial, canEdit }: { initial: Profile; canEdit: boolea
             ["Profile", "This page. Structured, length-capped, injection-screened data."],
             ["Job context", "Your per-request payload (business name, page, campaign…)."],
           ].map(([t, d], i) => (
-            <li key={t} className="flex gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+            <li key={t} className="flex gap-3 tile px-4 py-3">
               <span className="font-mono text-xs text-brand">{String(i + 1).padStart(2, "0")}</span>
               <span>
                 <span className="font-medium text-foreground">{t}</span>

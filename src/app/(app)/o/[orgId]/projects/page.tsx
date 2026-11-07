@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,14 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ops/data-table";
+import { usd } from "@/lib/format";
 import { ApiError } from "@/api/client";
 
 const SLUG = /^[a-z0-9-]+$/;
@@ -186,46 +179,31 @@ function ProjectsInner() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Budget cap</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects.data.projects.map((p) => (
-                <TableRow key={p.projectId}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="font-mono text-muted-foreground">{p.projectId}</TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      status={
-                        (["approved", "pending", "suspended"].includes(p.status ?? "")
-                          ? p.status
-                          : "draft") as Status
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">
-                    {p.monthlyBudgetUsd != null ? `$${p.monthlyBudgetUsd}` : "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      render={<Link href={`/o/${org.orgId}/p/${p.projectId}`}>Open</Link>}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          rows={projects.data.projects}
+          getRowKey={(p) => p.projectId}
+          getRowHref={(p) => `/o/${org.orgId}/p/${p.projectId}`}
+          getRowLabel={(p) => `Open project ${p.name}`}
+          columns={[
+            { id: "name", header: "Project", cell: (p) => <span className="font-medium text-foreground">{p.name}</span> },
+            { id: "id", header: "ID", cell: (p) => <span className="font-mono text-xs text-muted-foreground">{p.projectId}</span> },
+            {
+              id: "status",
+              header: "Status",
+              cell: (p) => (
+                <StatusBadge
+                  status={(["approved", "pending", "suspended"].includes(p.status ?? "") ? p.status : "draft") as Status}
+                />
+              ),
+            },
+            {
+              id: "cap",
+              header: "Budget cap",
+              align: "right",
+              cell: (p) => <span className="text-muted-foreground">{p.monthlyBudgetUsd != null ? usd(p.monthlyBudgetUsd) : "—"}</span>,
+            },
+          ]}
+        />
       )}
 
       <RoleGate min="admin">

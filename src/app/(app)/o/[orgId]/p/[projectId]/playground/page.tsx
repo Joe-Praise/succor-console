@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ApiError } from "@/api/client";
 import { cn } from "@/lib/utils";
+import { useUrlFilters } from "@/lib/url-filters";
 import type { CatalogEntry } from "@/types";
 
 interface RunRow {
@@ -68,6 +69,7 @@ function exampleBody(entry: CatalogEntry) {
 }
 
 const LIVE = new Set(["queued", "running"]);
+const RUN_KEYS = ["run"] as const;
 
 function ResultView({ run }: { run: RunDoc }) {
   const [tab, setTab] = useState<"output" | "callbacks" | "raw">("output");
@@ -129,7 +131,10 @@ function Playground() {
 
   const [agentType, setAgentType] = useState<string | null>(() => params.get("agent") || null);
   const [body, setBody] = useState<string | null>(null);
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  // The open run lives in the URL (?run=), so a playground result is linkable.
+  const { values: urlState, set: setUrlState } = useUrlFilters(RUN_KEYS);
+  const activeRunId = urlState.run || null;
+  const setActiveRunId = (id: string | null) => setUrlState({ run: id });
   const activeRun = usePlaygroundRun(projectId, activeRunId);
 
   const enabled = catalog.data?.catalog.filter((e) => e.enabledForProject !== false) ?? [];
@@ -177,7 +182,7 @@ function Playground() {
           { icon: ShieldIcon, t: "No tools, no side effects", d: "MCP tools only run inside durable jobs." },
           { icon: ReceiptTextIcon, t: "Metered like production", d: "Same budget cap, same per-run price." },
         ].map((x) => (
-          <div key={x.t} className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+          <div key={x.t} className="flex items-start gap-3 tile px-4 py-3">
             <x.icon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
             <div>
               <p className="text-sm font-medium text-foreground">{x.t}</p>

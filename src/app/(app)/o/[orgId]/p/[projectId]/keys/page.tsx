@@ -25,21 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ops/data-table";
+import { relativeTime } from "@/lib/format";
 import { ApiError } from "@/api/client";
 
 const NameSchema = z.object({ name: z.string().min(1, "Name the key").max(80) });
 type NameValues = z.infer<typeof NameSchema>;
 
 export default function KeysPage() {
-  const { projectId } = useProjectScope();
+  const { orgId, projectId } = useProjectScope();
   const keys = useKeys(projectId);
   const mint = useMintKey(projectId);
   const revoke = useRevokeKey(projectId);
@@ -87,54 +81,46 @@ export default function KeysPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Key</TableHead>
-                <TableHead>Last used</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keys.data.keys.map((k) => (
-                <TableRow key={k.id}>
-                  <TableCell className="font-medium">{k.name}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {k.prefix}…{k.last4}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {k.lastUsedAt ? k.lastUsedAt.toLocaleDateString() : "Never"}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={k.revokedAt ? "revoked" : "active"} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {!k.revokedAt ? (
-                      <RoleGate min="admin">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            revoke.mutate(k.id, {
-                              onSuccess: () => toast.success("Key revoked"),
-                              onError: (err) =>
-                                toast.error(err instanceof ApiError ? err.message : "Revoke failed"),
-                            })
-                          }
-                        >
-                          Revoke
-                        </Button>
-                      </RoleGate>
-                    ) : null}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          rows={keys.data.keys}
+          getRowKey={(k) => k.id}
+          getRowHref={(k) => `/o/${orgId}/p/${projectId}/keys/${k.id}`}
+          getRowLabel={(k) => `Open API key ${k.name}`}
+          columns={[
+            { id: "name", header: "Name", cell: (k) => <span className="font-medium text-foreground">{k.name}</span> },
+            { id: "key", header: "Key", cell: (k) => <span className="font-mono text-xs text-muted-foreground">{k.prefix}…{k.last4}</span> },
+            {
+              id: "used",
+              header: "Last used",
+              cell: (k) => <span className="text-muted-foreground">{k.lastUsedAt ? relativeTime(k.lastUsedAt) : "Never"}</span>,
+            },
+            { id: "status", header: "Status", cell: (k) => <StatusBadge status={k.revokedAt ? "revoked" : "active"} /> },
+            {
+              id: "actions",
+              header: "",
+              align: "right",
+              interactive: true,
+              cell: (k) =>
+                !k.revokedAt ? (
+                  <RoleGate min="admin">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => {
+                        if (!window.confirm(`Revoke "${k.name}"? Calls using it fail immediately.`)) return;
+                        revoke.mutate(k.id, {
+                          onSuccess: () => toast.success("Key revoked"),
+                          onError: (err) => toast.error(err instanceof ApiError ? err.message : "Revoke failed"),
+                        });
+                      }}
+                    >
+                      Revoke
+                    </Button>
+                  </RoleGate>
+                ) : null,
+            },
+          ]}
+        />
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

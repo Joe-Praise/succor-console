@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as projectsApi from "@/api/projects";
 import { orgProjectsKey } from "@/features/orgs/hooks";
+import { holdWithinProject } from "@/lib/hold-previous";
 
 export const setupKey = (projectId: string) => ["projects", projectId, "setup"] as const;
 export const keysKey = (projectId: string) => ["projects", projectId, "keys"] as const;
@@ -16,7 +17,6 @@ export const invoiceKey = (projectId: string, invoiceNumber: string) =>
   ["projects", projectId, "invoices", "detail", invoiceNumber] as const;
 export const catalogKey = (projectId?: string) => ["catalog", projectId ?? "global"] as const;
 export const agentRequestsKey = (projectId: string) => ["projects", projectId, "agent-requests"] as const;
-export const logsKey = (projectId: string) => ["projects", projectId, "logs"] as const;
 export const callbacksKey = (projectId: string) => ["projects", projectId, "callbacks"] as const;
 export const playgroundRunsKey = (projectId: string) => ["projects", projectId, "playground"] as const;
 
@@ -85,6 +85,7 @@ export function useUsage(projectId: string, params: projectsApi.UsageParams = {}
     queryKey: usageKey(projectId, params),
     queryFn: () => projectsApi.getUsage(projectId, params),
     enabled: !!projectId,
+    placeholderData: holdWithinProject(projectId),
   });
 }
 
@@ -146,20 +147,18 @@ export function useCreateAgentRequest(projectId: string) {
   });
 }
 
-export function useLogs(projectId: string, limit = 50) {
+export function useCallbacks(
+  projectId: string,
+  limit = 50,
+  ok?: boolean,
+  agentType?: string,
+  opts: { tailMs?: number } = {},
+) {
   return useQuery({
-    queryKey: [...logsKey(projectId), limit],
-    queryFn: () => projectsApi.listLogs(projectId, limit),
+    queryKey: [...callbacksKey(projectId), limit, ok ?? "all", agentType ?? "any"],
+    queryFn: () => projectsApi.listCallbacks(projectId, limit, ok, agentType),
     enabled: !!projectId,
-    refetchInterval: 15_000,
-  });
-}
-
-export function useCallbacks(projectId: string, limit = 50, ok?: boolean) {
-  return useQuery({
-    queryKey: [...callbacksKey(projectId), limit, ok ?? "all"],
-    queryFn: () => projectsApi.listCallbacks(projectId, limit, ok),
-    enabled: !!projectId,
+    refetchInterval: opts.tailMs ?? false,
   });
 }
 

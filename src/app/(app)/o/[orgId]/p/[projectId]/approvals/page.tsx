@@ -1,307 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
-import {
-  CheckIcon,
-  Loader2Icon,
-  StampIcon,
-  XIcon,
-  SparklesIcon,
-  ArrowRightIcon,
-  TriangleAlertIcon,
-} from "lucide-react";
+import { StampIcon, ArrowRightIcon, HistoryIcon } from "lucide-react";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useCatalog } from "@/features/projects/hooks";
-import { useApprovals, useDecideApproval } from "@/features/runtime/hooks";
+import { useApprovals } from "@/features/runtime/hooks";
+import { useAuditEvents } from "@/features/governance/hooks";
 import { useOrgCtx } from "@/features/orgs/org-context";
+import { ApprovalCard } from "@/features/approvals/approval-card";
 import { ORG_ROLE_RANK } from "@/lib/permissions";
-import type { ApprovalEdit } from "@/api/runtime";
-import { ApiError } from "@/api/client";
-import type { Approval } from "@/types";
+import { useUrlFilters } from "@/lib/url-filters";
+import { dateTime, shortId } from "@/lib/format";
+import type { AuditEvent } from "@/types";
 import { PageHeader } from "@/components/page-header";
-import { JsonPanel } from "@/components/json-panel";
 import { QueryError } from "@/components/query-error";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { AnyStatusBadge } from "@/components/ui/status-badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/ops/data-table";
+import { CursorPager } from "@/components/ops/primitives";
+import { FilterBar } from "@/components/ops/filters";
+import { StationLine, type Station } from "@/components/ops/station-line";
 
-/** The editable shape the backend accepts (seo-page content fields). */
-interface PagePreview {
-  h1?: string;
-  meta_title?: string;
-  meta_description?: string;
-  body_content?: string;
-  faqs?: Array<{ question: string; answer: string }>;
-  generation_note?: string | null;
-}
+const URL_KEYS = ["tab", "job", "decision"] as const;
 
-function asPagePreview(v: unknown): PagePreview | null {
-  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
-  const o = v as Record<string, unknown>;
-  return typeof o.h1 === "string" || typeof o.body_content === "string" ? (o as PagePreview) : null;
-}
-
-const FLOW = [
-  { n: "1", title: "Generate", body: "The agent runs and validates its output like any other job." },
-  { n: "2", title: "Hold", body: "The tenant-affecting delivery is parked — nothing reaches your API." },
-  { n: "3", title: "Decide", body: "An admin approves (optionally editing) or rejects with a note." },
-  { n: "4", title: "Deliver or learn", body: "Approve → the worker delivers durably. Reject → the note becomes a style rule." },
+const FLOW: Station[] = [
+  { key: "generate", label: "Generate", state: "done", detail: "The agent runs and validates its output" },
+  { key: "hold", label: "Hold", state: "waiting", detail: "Delivery is parked, nothing reaches your API" },
+  { key: "decide", label: "Decide", state: "pending", detail: "An admin approves, edits or rejects" },
+  { key: "deliver", label: "Deliver or learn", state: "pending", detail: "Approved: delivered. Rejected: note becomes a style rule" },
 ];
 
-function ApprovalCard({
-  approval,
-  canDecide,
-  agentName,
-  jobHref,
-}: {
-  approval: Approval;
-  canDecide: boolean;
-  agentName: string;
-  jobHref: string;
-}) {
-  const { projectId } = useProjectScope();
-  const decide = useDecideApproval(projectId);
-  const page = asPagePreview(approval.preview);
-
-  const [fields, setFields] = useState({
-    h1: page?.h1 ?? "",
-    meta_title: page?.meta_title ?? "",
-    meta_description: page?.meta_description ?? "",
-    body_content: page?.body_content ?? "",
-  });
-  const [note, setNote] = useState("");
-  const [mode, setMode] = useState<"idle" | "rejecting">("idle");
-
-  const edit: ApprovalEdit = {};
-  if (page) {
-    for (const k of Object.keys(fields) as Array<keyof typeof fields>) {
-      if (fields[k] !== (page[k] ?? "") && fields[k].trim()) edit[k] = fields[k];
-    }
-  }
-  const edited = Object.keys(edit).length > 0;
-
-  function submit(decision: "approve" | "reject") {
-    decide.mutate(
-      {
-        jobId: approval.jobId,
-        decision,
-        note: note.trim() || undefined,
-        edit: decision === "approve" && edited ? edit : undefined,
-      },
-      {
-        onSuccess: () =>
-          toast.success(
-            decision === "approve"
-              ? "Approved — the worker is delivering it now."
-              : note.trim()
-                ? "Rejected — your note was saved as a style rule."
-                : "Rejected — the delivery was discarded.",
-          ),
-        onError: (err) =>
-          toast.error(err instanceof ApiError ? err.message : "Couldn't record the decision"),
-      },
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <p className="font-medium text-foreground">{agentName}</p>
-            <p className="text-xs text-muted-foreground">
-              Generated {approval.createdAt ? approval.createdAt.toLocaleString() : "—"} ·{" "}
-              <Link href={jobHref} className="font-mono text-brand hover:underline">
-                job …{approval.jobId.slice(-8)}
-              </Link>
-            </p>
-          </div>
-          {approval.target ? (
-            <span className="rounded-md border border-border bg-raised px-2 py-1 font-mono text-[11px] text-muted-foreground">
-              will {approval.target.method} {approval.target.path}
-            </span>
-          ) : null}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {approval.undecodable ? (
-          <div className="flex items-start gap-2.5 rounded-lg bg-warning-bg px-4 py-3 text-sm text-warning">
-            <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-            The held delivery can&apos;t be read (key rotated out or erased), so it can only be
-            rejected.
-          </div>
-        ) : page ? (
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor={`h1-${approval.jobId}`}>H1</Label>
-                <Input
-                  id={`h1-${approval.jobId}`}
-                  value={fields.h1}
-                  readOnly={!canDecide}
-                  onChange={(e) => setFields({ ...fields, h1: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`mt-${approval.jobId}`}>Meta title</Label>
-                <Input
-                  id={`mt-${approval.jobId}`}
-                  value={fields.meta_title}
-                  readOnly={!canDecide}
-                  onChange={(e) => setFields({ ...fields, meta_title: e.target.value })}
-                />
-                <p className="text-[11px] tabular-nums text-faint">{fields.meta_title.length} / 60</p>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`md-${approval.jobId}`}>Meta description</Label>
-              <Textarea
-                id={`md-${approval.jobId}`}
-                rows={2}
-                value={fields.meta_description}
-                readOnly={!canDecide}
-                onChange={(e) => setFields({ ...fields, meta_description: e.target.value })}
-              />
-              <p className="text-[11px] tabular-nums text-faint">{fields.meta_description.length} / 160</p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`bc-${approval.jobId}`}>Body (HTML — shown as source, never rendered here)</Label>
-              <Textarea
-                id={`bc-${approval.jobId}`}
-                rows={8}
-                className="font-mono text-xs"
-                value={fields.body_content}
-                readOnly={!canDecide}
-                onChange={(e) => setFields({ ...fields, body_content: e.target.value })}
-              />
-            </div>
-            {page.faqs && page.faqs.length > 0 ? (
-              <details className="rounded-lg border border-border bg-surface px-4 py-3">
-                <summary className="cursor-pointer text-sm font-medium text-foreground">
-                  {page.faqs.length} FAQs
-                </summary>
-                <dl className="mt-3 space-y-3">
-                  {page.faqs.map((f, i) => (
-                    <div key={i}>
-                      <dt className="text-sm font-medium text-foreground">{f.question}</dt>
-                      <dd className="text-sm text-muted-foreground">{f.answer}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </details>
-            ) : null}
-            {page.generation_note ? (
-              <p className="rounded-lg bg-raised px-3 py-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Agent note:</span> {page.generation_note}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <JsonPanel value={approval.preview} label="held delivery body" />
-        )}
-
-        {canDecide ? (
-          <div className="space-y-3 border-t border-border pt-4">
-            {mode === "rejecting" ? (
-              <div className="space-y-1.5">
-                <Label htmlFor={`note-${approval.jobId}`}>Why are you rejecting it?</Label>
-                <Textarea
-                  id={`note-${approval.jobId}`}
-                  rows={2}
-                  maxLength={2000}
-                  placeholder="e.g. Never open with a rhetorical question. Keep meta titles under 55 characters."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-                <p className="flex items-center gap-1.5 text-xs text-faint">
-                  <SparklesIcon className="size-3.5 text-brand" aria-hidden />
-                  Saved as a durable style rule — future generations for this project read it.
-                </p>
-              </div>
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2">
-              {mode === "rejecting" ? (
-                <>
-                  <Button variant="destructive" disabled={decide.isPending} onClick={() => submit("reject")}>
-                    {decide.isPending ? <Loader2Icon className="animate-spin" /> : <XIcon />}
-                    Reject and discard
-                  </Button>
-                  <Button variant="ghost" onClick={() => setMode("idle")}>
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    disabled={decide.isPending || approval.undecodable}
-                    onClick={() => submit("approve")}
-                  >
-                    {decide.isPending ? <Loader2Icon className="animate-spin" /> : <CheckIcon />}
-                    {edited ? "Approve with edits" : "Approve and deliver"}
-                  </Button>
-                  <Button variant="outline" onClick={() => setMode("rejecting")}>
-                    Reject…
-                  </Button>
-                  {edited ? (
-                    <span className="text-xs text-faint">
-                      {Object.keys(edit).length} field{Object.keys(edit).length === 1 ? "" : "s"} edited
-                    </span>
-                  ) : null}
-                </>
-              )}
-            </div>
-          </div>
-        ) : (
-          <p className="border-t border-border pt-4 text-xs text-faint">
-            Only project admins and owners can approve or reject.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-export default function ApprovalsPage() {
+function PendingQueue({ focusJob }: { focusJob: string }) {
   const { orgId, projectId } = useProjectScope();
   const { role } = useOrgCtx();
   const approvals = useApprovals(projectId);
   const catalog = useCatalog(projectId);
-
   const canDecide = ORG_ROLE_RANK[role] >= ORG_ROLE_RANK.admin;
   const base = `/o/${orgId}/p/${projectId}`;
   const gatedAgents = (catalog.data?.catalog ?? []).filter((e) => e.riskTier === "high");
-  const rows = approvals.data?.approvals ?? [];
+
+  // A deep link (?job=) floats that approval to the top and highlights it.
+  const rows = [...(approvals.data?.approvals ?? [])].sort(
+    (a, b) => Number(b.jobId === focusJob) - Number(a.jobId === focusJob),
+  );
+  const focusMissing = !!focusJob && !!approvals.data && !rows.some((a) => a.jobId === focusJob);
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Approvals"
-        description="High-risk agents generate, then stop. Nothing reaches your API until an admin signs off."
-      />
-
-      <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {FLOW.map((s) => (
-          <li key={s.n} className="rounded-xl border border-border bg-surface p-4">
-            <p className="font-mono text-xs text-brand">{s.n.padStart(2, "0")}</p>
-            <p className="mt-1 text-sm font-medium text-foreground">{s.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{s.body}</p>
-          </li>
-        ))}
-      </ol>
+    <div className="space-y-5">
+      <div className="tile px-3 py-2">
+        <StationLine stations={FLOW} compact />
+      </div>
 
       {gatedAgents.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Gated agents:{" "}
           {gatedAgents.map((e, i) => (
             <span key={e.agentType}>
-              <span className="font-mono text-xs text-foreground">{e.agentType}</span>
+              <span className="font-mono text-foreground">{e.agentType}</span>
               {i < gatedAgents.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -309,10 +69,19 @@ export default function ApprovalsPage() {
         </p>
       ) : null}
 
+      {focusMissing ? (
+        <p className="rounded-lg bg-raised px-3 py-2 text-xs text-muted-foreground">
+          Run <span className="font-mono">{shortId(focusJob)}</span> isn&apos;t waiting for a decision any more.{" "}
+          <Link href={`${base}/runs/${focusJob}`} className="text-brand hover:underline">
+            See what happened →
+          </Link>
+        </p>
+      ) : null}
+
       {approvals.isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl" />
         </div>
       ) : approvals.isError ? (
         <QueryError message="Couldn't load the approval queue." onRetry={() => void approvals.refetch()} />
@@ -322,8 +91,8 @@ export default function ApprovalsPage() {
           title="Nothing waiting on you"
           description="When a gated agent finishes, its held delivery shows up here for review."
           action={
-            <Button variant="outline" size="sm" render={<Link href={`${base}/jobs`} />}>
-              See recent jobs
+            <Button variant="outline" size="sm" render={<Link href={`${base}/runs?status=pending_approval`} />}>
+              See runs
               <ArrowRightIcon />
             </Button>
           }
@@ -335,12 +104,139 @@ export default function ApprovalsPage() {
               key={a.jobId}
               approval={a}
               canDecide={canDecide}
+              focused={a.jobId === focusJob}
               agentName={catalog.data?.catalog.find((e) => e.agentType === a.agentType)?.name ?? a.agentType}
-              jobHref={`${base}/jobs/${a.jobId}`}
+              runHref={`${base}/runs/${a.jobId}`}
             />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+const DECISION_LABEL: Record<string, string> = {
+  "approval.approve": "Approved",
+  "approval.reject": "Rejected",
+};
+
+function DecisionHistory({ decision, onDecision }: { decision: string; onDecision: (v: string) => void }) {
+  const { orgId, projectId } = useProjectScope();
+  const catalog = useCatalog(projectId);
+  const base = `/o/${orgId}/p/${projectId}`;
+  const action = decision === "reject" ? "approval.reject" : "approval.approve";
+  // The ledger filters on one exact action, so the two decisions are separate views
+  // rather than a client-side merge of two cursors.
+  const audit = useAuditEvents(projectId, { action, targetType: "agentJob" });
+  const rows = audit.data?.pages.flatMap((p) => p.events) ?? [];
+  const nameOf = (t: string | null | undefined) =>
+    (t && catalog.data?.catalog.find((e) => e.agentType === t)?.name) || t || "—";
+
+  return (
+    <div className="space-y-4">
+      <FilterBar onRefresh={() => void audit.refetch()} refreshing={audit.isFetching}>
+        <Tabs value={decision === "reject" ? "reject" : "approve"} onValueChange={(v) => onDecision(v === "reject" ? "reject" : "")}>
+          <TabsList>
+            <TabsTrigger value="approve">Approved</TabsTrigger>
+            <TabsTrigger value="reject">Rejected</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </FilterBar>
+      <p className="text-xs text-muted-foreground">
+        From the signed audit ledger. Reviewer notes are never stored in the ledger — only their length. A{" "}
+        <span className="font-mono">conflict</span> outcome means the run had already been decided.
+      </p>
+      <DataTable<AuditEvent>
+        rows={rows}
+        getRowKey={(e) => e.id}
+        getRowHref={(e) => (e.targetId ? `${base}/runs/${e.targetId}` : null)}
+        getRowLabel={(e) => `Open run ${e.targetId ?? ""}`}
+        loading={audit.isLoading}
+        error={audit.isError ? { message: "Couldn't load decision history.", onRetry: () => void audit.refetch() } : null}
+        empty={
+          <EmptyState
+            icon={HistoryIcon}
+            title={`No ${decision === "reject" ? "rejections" : "approvals"} yet`}
+            description="Decisions appear here the moment they're recorded."
+          />
+        }
+        columns={[
+          { id: "ts", header: "When", cell: (e) => <span className="text-muted-foreground">{e.unreadable ? "—" : dateTime(e.ts)}</span> },
+          {
+            id: "decision",
+            header: "Decision",
+            cell: (e) => (e.unreadable ? <span className="text-warning">Unreadable row</span> : DECISION_LABEL[e.action ?? ""] ?? e.action),
+          },
+          { id: "outcome", header: "Outcome", cell: (e) => (e.unreadable ? null : <AnyStatusBadge value={e.outcome} />) },
+          { id: "agent", header: "Agent", cell: (e) => nameOf(e.agentType) },
+          { id: "actor", header: "Reviewer", cell: (e) => <span className="block max-w-44 truncate font-mono text-[11px] text-faint">{e.actor}</span> },
+          { id: "note", header: "Note", cell: (e) => (e.noteLength ? `${e.noteLength} chars` : <span className="text-faint">—</span>) },
+          {
+            id: "ledger",
+            header: "",
+            align: "right",
+            interactive: true,
+            cell: (e) => (
+              <Link href={`${base}/audit/${e.id}`} className="font-mono text-[11px] text-brand hover:underline">
+                ledger {shortId(e.id)}
+              </Link>
+            ),
+          },
+        ]}
+        footer={
+          rows.length ? (
+            <CursorPager
+              hasMore={!!audit.hasNextPage}
+              loading={audit.isFetchingNextPage}
+              onLoadMore={() => void audit.fetchNextPage()}
+              count={rows.length}
+              noun="decisions"
+            />
+          ) : null
+        }
+      />
+    </div>
+  );
+}
+
+function ApprovalCenter() {
+  const { projectId } = useProjectScope();
+  const { values, set } = useUrlFilters(URL_KEYS);
+  const approvals = useApprovals(projectId);
+  const tab = values.tab === "history" ? "history" : "pending";
+  const pending = approvals.data?.approvals.length;
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        size="compact"
+        title="Approvals"
+        description="High-risk agents generate, then stop. Nothing reaches your API until an admin signs off."
+      />
+      <Tabs value={tab} onValueChange={(v) => set({ tab: v === "history" ? "history" : null, job: null })}>
+        <TabsList>
+          <TabsTrigger value="pending">
+            Pending
+            {pending ? (
+              <span className="ml-1.5 rounded-full bg-brand-muted px-1.5 text-[11px] tabular-nums text-brand">{pending}</span>
+            ) : null}
+          </TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {tab === "pending" ? (
+        <PendingQueue focusJob={values.job} />
+      ) : (
+        <DecisionHistory decision={values.decision} onDecision={(v) => set({ decision: v || null })} />
+      )}
+    </div>
+  );
+}
+
+export default function ApprovalsPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+      <ApprovalCenter />
+    </Suspense>
   );
 }

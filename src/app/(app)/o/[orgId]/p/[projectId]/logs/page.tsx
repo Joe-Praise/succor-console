@@ -1,150 +1,206 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { ScrollTextIcon } from "lucide-react";
+import { Suspense, useMemo } from "react";
+import { DownloadIcon, ScrollTextIcon } from "lucide-react";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
-import { useLogs } from "@/features/projects/hooks";
-import { usd } from "@/features/invoices/invoice-ui";
+import { useUsageRecords } from "@/features/executions/hooks";
+import { useAgentNames } from "@/features/agents/use-agent-names";
+import { useUrlFilters } from "@/lib/url-filters";
+import { toCsv, download } from "@/lib/csv";
+import { duration, dateTime, usdPrecise, tokens, shortId } from "@/lib/format";
+import { FAILED_RUN_STATUSES } from "@/lib/status";
+import type { UsageRecord } from "@/types";
 import { PageHeader } from "@/components/page-header";
-import { QueryError } from "@/components/query-error";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, type Column } from "@/components/ops/data-table";
+import { CursorPager } from "@/components/ops/primitives";
+import { EventHistogram } from "@/components/charts/event-histogram";
+import { FilterBar, SelectFilter, SearchFilter } from "@/components/ops/filters";
 
-/** agent-service models/agent-log.model.ts — one immutable, priced row per run. */
-interface LogRow {
-  _id?: string;
-  ts?: string;
-  agentType?: string;
-  model?: string;
-  status?: string;
-  durationMs?: number | null;
-  inputTokens?: number | null;
-  outputTokens?: number | null;
-  embeddingTokens?: number | null;
-  toolCalls?: number | null;
-  estimatedCostUsd?: number | null;
-  billedUsd?: number | null;
-  errorMessage?: string | null;
-  initiatedBy?: string;
-  jobId?: string | null;
-}
+const FILTER_KEYS = ["status", "agent", "model", "job", "from", "to"] as const;
 
-const ERROR_STATUSES = new Set(["error", "rate_limited", "validation_failed"]);
+const STATUS_OPTIONS = [
+  { value: "success", label: "Success" },
+  { value: "error,rate_limited,validation_failed", label: "Any failure" },
+  { value: "error", label: "Error" },
+  { value: "validation_failed", label: "Validation failed" },
+  { value: "rate_limited", label: "Rate limited" },
+  { value: "skipped", label: "Skipped" },
+];
 
-export default function LogsPage() {
+function LogsExplorer() {
   const { orgId, projectId } = useProjectScope();
-  const logs = useLogs(projectId, 200);
-  const [filter, setFilter] = useState<"all" | "errors">("all");
-  const all = (logs.data ?? []) as LogRow[];
-  const rows = filter === "errors" ? all.filter((r) => ERROR_STATUSES.has(r.status ?? "")) : all;
+  const { values, set, reset, active } = useUrlFilters(FILTER_KEYS);
+  const { nameOf, entries } = useAgentNames(projectId);
+  const records = useUsageRecords(projectId, {
+    status: values.status || undefined,
+    agentType: values.agent || undefined,
+    model: values.model || undefined,
+    jobId: values.job || undefined,
+    from: values.from || undefined,
+    to: values.to || undefined,
+    limit: 100,
+  });
+  const rows = useMemo(() => records.data?.pages.flatMap((p) => p.records) ?? [], [records.data]);
+  const traffic = useMemo(() => rows.map((r) => ({ ts: r.ts.getTime(), kind: FAILED_RUN_STATUSES.has(r.status) ? ("failed" as const) : ("ok" as const) })), [rows]);
+  const span = traffic.length > 1 ? { from: Math.min(...traffic.map((t) => t.ts)), to: Math.max(...traffic.map((t) => t.ts)) } : null;
   const base = `/o/${orgId}/p/${projectId}`;
+  const models = [...new Set(rows.map((r) => r.model))].sort();
+
+  function exportCsv() {
+    const csv = toCsv(
+      ["ts", "jobId", "agentType", "model", "status", "inputTokens", "outputTokens", "embeddingTokens", "estimatedCostUsd", "billedUsd", "markupMultiplier", "pricingVersion", "durationMs"],
+      rows.map((r) => [
+        r.ts.toISOString(), r.jobId ?? "", r.agentType, r.model, r.status, r.inputTokens ?? "", r.outputTokens ?? "",
+        r.embeddingTokens ?? "", r.estimatedCostUsd ?? "", r.billedUsd ?? "", r.markupMultiplier ?? "", r.pricingVersion ?? "", r.durationMs ?? "",
+      ]),
+    );
+    download(`${projectId}-usage-records.csv`, csv);
+  }
+
+  const columns: Column<UsageRecord>[] = [
+    { id: "ts", header: "Recorded", cell: (r) => <span className="text-muted-foreground">{dateTime(r.ts)}</span> },
+    {
+      id: "agent",
+      header: "Agent",
+      cell: (r) => (
+        <div className="min-w-0">
+          <p className="truncate text-foreground">{nameOf(r.agentType)}</p>
+          <p className="font-mono text-[11px] text-faint">{r.model}</p>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: "Outcome",
+      className: "max-w-64",
+      cell: (r) => (
+        <div className="min-w-0">
+          <AnyStatusBadge value={r.status} />
+          {r.errorMessage ? (
+            <p className="mt-1 truncate text-[11px] text-muted-foreground" title={r.errorMessage}>
+              {r.errorMessage}
+            </p>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: "tokens",
+      header: "Tokens",
+      align: "right",
+      cell: (r) => tokens((r.inputTokens ?? 0) + (r.outputTokens ?? 0) + (r.embeddingTokens ?? 0)),
+    },
+    { id: "cost", header: "Provider cost", align: "right", cell: (r) => <span className="text-muted-foreground">{usdPrecise(r.estimatedCostUsd)}</span> },
+    { id: "billed", header: "Billed", align: "right", cell: (r) => usdPrecise(r.billedUsd) },
+    { id: "dur", header: "Duration", align: "right", cell: (r) => <span className="text-muted-foreground">{duration(r.durationMs)}</span> },
+    {
+      id: "job",
+      header: "Run",
+      align: "right",
+      cell: (r) => (r.jobId ? <span className="font-mono text-[11px] text-faint">{shortId(r.jobId)}</span> : <span className="text-faint">—</span>),
+    },
+  ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader
+        size="compact"
         title="Logs"
-        description="One priced, immutable row per run — the same rows your invoice is built from. Refreshes automatically."
+        description="One priced, immutable record per metered run — the same rows your invoice is built from."
+        action={
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={rows.length === 0}>
+            <DownloadIcon />
+            Export loaded rows
+          </Button>
+        }
       />
 
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as "all" | "errors")}>
-        <TabsList>
-          <TabsTrigger value="all">All runs</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {logs.isLoading ? (
-        <Skeleton className="h-64 w-full rounded-xl" />
-      ) : logs.isError ? (
-        <QueryError message="Couldn't load the run log." onRetry={() => void logs.refetch()} />
-      ) : rows.length === 0 ? (
-        <EmptyState
-          icon={ScrollTextIcon}
-          title={filter === "errors" ? "No failed runs" : "No runs yet"}
-          description={
-            filter === "errors"
-              ? "Nothing in the latest 200 runs failed."
-              : "Trigger an agent (or use the playground) and its run appears here."
-          }
+      <FilterBar active={active} onClear={reset} onRefresh={() => void records.refetch()} refreshing={records.isFetching && !records.isFetchingNextPage}>
+        <SelectFilter label="Outcome" value={values.status} options={STATUS_OPTIONS} onChange={(v) => set({ status: v })} />
+        <SelectFilter
+          label="Agent"
+          value={values.agent}
+          options={entries.map((e) => ({ value: e.agentType, label: e.name }))}
+          onChange={(v) => set({ agent: v })}
         />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Tokens</TableHead>
-                <TableHead className="text-right">Tools</TableHead>
-                <TableHead className="text-right">Cost → billed</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
-                <TableHead className="text-right">Job</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((log, i) => (
-                <TableRow key={log._id ?? i}>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {log.ts ? new Date(log.ts).toLocaleString() : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <span className="block font-mono text-xs">{log.agentType ?? "—"}</span>
-                    <span className="block font-mono text-[11px] text-faint">{log.model}</span>
-                  </TableCell>
-                  <TableCell className="max-w-56">
-                    <AnyStatusBadge value={log.status} />
-                    {log.errorMessage ? (
-                      <span className="mt-1 block truncate text-xs text-muted-foreground" title={log.errorMessage}>
-                        {log.errorMessage}
-                      </span>
-                    ) : null}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {((log.inputTokens ?? 0) + (log.outputTokens ?? 0)).toLocaleString()}
-                    {log.embeddingTokens ? (
-                      <span className="block text-[11px] text-faint">+{log.embeddingTokens.toLocaleString()} emb</span>
-                    ) : null}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {log.toolCalls ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums whitespace-nowrap">
-                    <span className="text-faint">
-                      {log.estimatedCostUsd != null ? usd(log.estimatedCostUsd) : "—"} →{" "}
-                    </span>
-                    {log.billedUsd != null ? usd(log.billedUsd) : "—"}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {log.durationMs != null ? `${(log.durationMs / 1000).toFixed(1)}s` : "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {log.jobId ? (
-                      <Link href={`${base}/jobs/${log.jobId}`} className="font-mono text-xs text-brand hover:underline">
-                        …{log.jobId.slice(-6)}
-                      </Link>
-                    ) : (
-                      <span className="text-faint">—</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <SelectFilter
+          label="Model"
+          value={values.model}
+          options={(values.model && !models.includes(values.model) ? [values.model, ...models] : models).map((m) => ({ value: m, label: m }))}
+          onChange={(v) => set({ model: v })}
+        />
+        <SearchFilter value={values.job} placeholder="Filter by job ID" onCommit={(v) => set({ job: v })} />
+      </FilterBar>
+
+      {values.from || values.to ? (
+        <p className="text-xs text-muted-foreground">
+          Period {values.from ? dateTime(values.from) : "…"} → {values.to ? dateTime(values.to) : "now"} ·{" "}
+          <button type="button" className="text-brand hover:underline" onClick={() => set({ from: null, to: null })}>
+            all time
+          </button>
+        </p>
+      ) : null}
+
+      {span ? (
+        <div className="tile px-3 pt-3 pb-2">
+          <EventHistogram
+            ariaLabel="Priced runs over time, from the records loaded below"
+            events={traffic}
+            kinds={[
+              { key: "ok", label: "Succeeded", color: "var(--chart-2)" },
+              { key: "failed", label: "Failed", color: "var(--error)" },
+            ]}
+            from={span.from}
+            to={span.to}
+            timeLabel={(t) => dateTime(new Date(t))}
+          />
         </div>
-      )}
+      ) : null}
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        getRowKey={(r) => r.id}
+        getRowHref={(r) => `${base}/logs/${r.id}`}
+        getRowLabel={(r) => `Open usage record for ${nameOf(r.agentType)} at ${dateTime(r.ts)}`}
+        loading={records.isLoading}
+        error={records.isError ? { message: "Couldn't load usage records.", onRetry: () => void records.refetch() } : null}
+        empty={
+          <EmptyState
+            icon={ScrollTextIcon}
+            title={active > 0 ? "No records match these filters" : "No metered runs yet"}
+            description={
+              active > 0
+                ? "Clear a filter to see more."
+                : "A run is metered once, when it reaches its final state. Trigger an agent and its record appears here."
+            }
+          />
+        }
+        footer={
+          rows.length ? (
+            <CursorPager
+              hasMore={!!records.hasNextPage}
+              loading={records.isFetchingNextPage}
+              onLoadMore={() => void records.fetchNextPage()}
+              count={rows.length}
+              noun="records"
+            />
+          ) : null
+        }
+      />
     </div>
+  );
+}
+
+export default function LogsPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+      <LogsExplorer />
+    </Suspense>
   );
 }

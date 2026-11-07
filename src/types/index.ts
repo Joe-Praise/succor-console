@@ -476,3 +476,170 @@ export const SupportTicketSchema = z.object({
   updatedAt: z.coerce.date().optional(),
 });
 export type SupportTicket = z.infer<typeof SupportTicketSchema>;
+
+// ---------------------------------------------------------------------------
+// Execution control plane (agent-service routes/executions.ts — read-only).
+// Field semantics are documented in agent-service
+// plans/CONSOLE-EXECUTION-API-CONTRACT.md; keep the two in step.
+// ---------------------------------------------------------------------------
+
+const nullableDate = z.coerce.date().nullable().optional();
+
+/** One priced, immutable AgentLog row — the unit an invoice is built from. */
+export const UsageRecordSchema = z.object({
+  id: z.string(),
+  ts: z.coerce.date(),
+  jobId: z.string().nullable(),
+  agentType: z.string(),
+  model: z.string(),
+  status: z.string(),
+  inputTokens: z.number().nullable(),
+  outputTokens: z.number().nullable(),
+  embeddingTokens: z.number().nullable(),
+  toolCalls: z.number().nullable(),
+  estimatedCostUsd: z.number().nullable(),
+  billedUsd: z.number().nullable(),
+  markupMultiplier: z.number().nullable(),
+  pricingVersion: z.string().nullable(),
+  durationMs: z.number().nullable(),
+  initiatedBy: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+});
+export type UsageRecord = z.infer<typeof UsageRecordSchema>;
+
+/** A run in the list: job lifecycle + batched cost and delivery summaries. */
+export const RunRowSchema = z.object({
+  id: z.string(),
+  agentType: z.string(),
+  status: z.string(),
+  runStatus: z.string().nullable(),
+  attempt: z.number(),
+  maxAttempts: z.number(),
+  requestId: z.string().nullable(),
+  workflowId: z.string().nullable(),
+  initiatedBy: z.string(),
+  lastError: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  cost: z.object({ costUsd: z.number(), billedUsd: z.number(), records: z.number() }).nullable().optional(),
+  delivery: z
+    .object({ status: z.string(), attempt: z.number(), outcomeUnknown: z.boolean(), count: z.number() })
+    .nullable()
+    .optional(),
+});
+export type RunRow = z.infer<typeof RunRowSchema>;
+
+export const RunPageSchema = z.object({ jobs: z.array(RunRowSchema), nextCursor: z.string().nullable() });
+export type RunPage = z.infer<typeof RunPageSchema>;
+
+export const CheckpointSchema = z.object({
+  name: z.string(),
+  completedAt: nullableDate,
+  usage: z.object({ inputTokens: z.number().nullable(), outputTokens: z.number().nullable() }).nullable(),
+  undecodable: z.boolean().optional(),
+});
+export type Checkpoint = z.infer<typeof CheckpointSchema>;
+
+/** A side-effect intent and its delivery lifecycle (http.callback, mcp.tool, …). */
+export const EffectSchema = z.object({
+  id: z.string(),
+  effectKey: z.string(),
+  kind: z.string(),
+  status: z.string(),
+  attempt: z.number(),
+  outcomeUnknown: z.boolean(),
+  error: z.string().nullable(),
+  deliveryId: z.string(),
+  nextAttemptAt: nullableDate,
+  createdAt: z.coerce.date(),
+  readyAt: nullableDate,
+  claimedAt: nullableDate,
+  succeededAt: nullableDate,
+  failedAt: nullableDate,
+  cancelledAt: nullableDate,
+  deadAt: nullableDate,
+  target: z.record(z.string(), z.unknown()).nullable(),
+});
+export type Effect = z.infer<typeof EffectSchema>;
+
+export const ExecutionRecordSchema = z.object({
+  job: RunRowSchema.omit({ cost: true, delivery: true }).extend({
+    nextRunAt: nullableDate,
+    reviewedBy: z.string().nullable(),
+    reviewedAt: nullableDate,
+    reviewNote: z.string().nullable(),
+    result: z.unknown().optional(),
+    resultUndecodable: z.boolean().optional(),
+    input: z.unknown().optional(),
+    inputUndecodable: z.boolean().optional(),
+  }),
+  checkpoints: z.array(CheckpointSchema),
+  effects: z.array(EffectSchema),
+  usage: z.array(UsageRecordSchema),
+  audit: z.array(AuditEventSchema),
+});
+export type ExecutionRecord = z.infer<typeof ExecutionRecordSchema>;
+
+export const CheckpointOutputSchema = z.object({
+  name: z.string(),
+  completedAt: nullableDate,
+  output: z.unknown().optional(),
+  outputUndecodable: z.boolean().optional(),
+});
+export type CheckpointOutput = z.infer<typeof CheckpointOutputSchema>;
+
+export const UsageRecordPageSchema = z.object({
+  records: z.array(UsageRecordSchema),
+  nextCursor: z.string().nullable(),
+});
+export type UsageRecordPage = z.infer<typeof UsageRecordPageSchema>;
+
+/** One recorded HTTP callback attempt (CallbackDelivery, 30-day TTL). */
+export const CallbackDeliverySchema = z.object({
+  id: z.string().optional(),
+  _id: z.string().optional(),
+  ts: z.coerce.date(),
+  agentType: z.string(),
+  method: z.string(),
+  url: z.string(),
+  envLabel: z.string(),
+  responseStatus: z.number().nullable(),
+  ok: z.boolean(),
+  durationMs: z.number(),
+  errorMessage: z.string().nullable().optional(),
+});
+export type CallbackDelivery = z.infer<typeof CallbackDeliverySchema>;
+
+export const OpsSummarySchema = z.object({
+  projectId: z.string(),
+  from: z.coerce.date(),
+  to: z.coerce.date(),
+  jobs: z.record(z.string(), z.number()),
+  live: z.record(z.string(), z.number()),
+  deliveries: z.object({
+    byStatus: z.record(z.string(), z.number()),
+    outcomeUnknown: z.number(),
+  }),
+  runs: z.object({
+    total: z.number(),
+    succeeded: z.number(),
+    failed: z.number(),
+    truncated: z.boolean(),
+  }),
+  durationMs: z.object({
+    avg: z.number().nullable(),
+    p50: z.number().nullable(),
+    p95: z.number().nullable(),
+    max: z.number().nullable(),
+  }),
+  daily: z.array(
+    z.object({
+      date: z.string(),
+      succeeded: z.number(),
+      failed: z.number(),
+      other: z.number(),
+      avgDurationMs: z.number().nullable(),
+    }),
+  ),
+});
+export type OpsSummary = z.infer<typeof OpsSummarySchema>;

@@ -55,6 +55,8 @@ export function useDecideApproval(projectId: string) {
         qc.invalidateQueries({ queryKey: approvalsKey(projectId) }),
         qc.invalidateQueries({ queryKey: jobKey(vars.jobId) }),
         qc.invalidateQueries({ queryKey: ["projects", projectId, "audit"] }),
+        // Run list + execution record show the job leaving pending_approval.
+        qc.invalidateQueries({ queryKey: ["projects", projectId, "executions"] }),
       ]);
     },
   });

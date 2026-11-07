@@ -71,7 +71,7 @@ const STATUS: Record<Status, Tone> = {
   approved: { label: "Approved", ...GOOD },
   suspended: { label: "Suspended", ...BAD },
   in_review: { label: "In review", ...INFO },
-  building: { label: "Building", text: "text-brand", bg: "bg-info-bg", dot: "bg-brand" },
+  building: { label: "Building", text: "text-brand", bg: "bg-brand-muted", dot: "bg-brand" },
   delivered: { label: "Delivered", ...GOOD },
   rejected: { label: "Rejected", ...BAD },
   active: { label: "Active", ...GOOD },
@@ -124,13 +124,13 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] px-1.5 text-[11px] font-medium whitespace-nowrap",
         s.bg,
         s.text,
         className,
       )}
     >
-      <span className={cn("size-1.5 rounded-full", s.dot, s.pulse && "animate-pulse")} aria-hidden />
+      <span className={cn("size-1.5 rounded-full", s.dot, s.pulse && "live-dot")} aria-hidden />
       {label ?? s.label}
     </span>
   );
@@ -142,7 +142,7 @@ export function AnyStatusBadge({ value, className }: { value: string | null | un
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 rounded-full bg-raised px-2 py-0.5 text-xs font-medium text-muted-foreground",
+        "inline-flex h-5 w-fit items-center gap-1.5 rounded-[4px] bg-raised px-1.5 text-[11px] font-medium text-muted-foreground",
         className,
       )}
     >

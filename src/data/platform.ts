@@ -86,7 +86,7 @@ export const PILLARS: Pillar[] = [
     title: "Results reach your API, or you know exactly why not.",
     body: "Callbacks are recorded as durable effects and released only after a successful, fenced run. 5xx, 429 and timeouts retry with backoff; other 4xx stop. Every attempt is logged with its status and duration.",
     points: [
-      "Signed with your callback key; stable X-Delivery-Id for deduplication",
+      "Authenticated with your callback key; stable X-Delivery-Id for deduplication",
       "Environment-aware targets — production, staging, local — SSRF-guarded",
       "Failed deliveries surface on your overview, not in a log you forgot",
     ],

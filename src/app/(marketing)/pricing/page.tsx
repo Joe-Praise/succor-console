@@ -5,7 +5,7 @@ import { ArrowRightIcon, CheckIcon } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
-import { SectionHeading, CtaBand, Faq } from "@/components/marketing/section";
+import { PageHero, SectionHeading, CtaBand, Faq } from "@/components/marketing/section";
 
 export const metadata: Metadata = {
   title: `Pricing — ${BRAND_NAME}`,
@@ -41,7 +41,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I cap spend per project?",
-    a: "Yes — set a monthly budget cap per project. At the limit, agent calls return 402 and stop spending until the month resets or you raise the cap. It's a wall, not a warning.",
+    a: "Yes — set a monthly budget cap per project. Once it's reached, new agent calls return 402 until the month resets or you raise the cap. It's a soft cap: spend is counted after a run bills, so a burst can overshoot slightly, and jobs already accepted still finish.",
   },
   {
     q: "Do you offer volume discounts?",
@@ -56,34 +56,22 @@ const FAQ_ITEMS = [
 export default function PricingPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl px-6 pt-20 pb-14 text-center md:pt-28">
-        <p className="font-mono text-xs tracking-[0.2em] text-brand uppercase">Pricing</p>
-        <h1
-          className="mt-4 font-serif text-foreground"
-          style={{
-            fontSize: "clamp(34px, 6vw, 56px)",
-            lineHeight: 1.1,
-            fontWeight: 500,
-            letterSpacing: "-0.015em",
-          }}
-        >
-          Pay for what runs. Audit every run.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          No seats. No platform fee. No credit packs. A run&apos;s price is the provider&apos;s
-          metered cost × a simple multiplier — and you always see both numbers.
-        </p>
-        <div className="mt-8">
+      <PageHero
+        eyebrow="Pricing"
+        title="Pay for what runs. Audit every run."
+        lede="No seats. No platform fee. No credit packs. A run's price is the provider's metered cost times a simple multiplier, and you always see both numbers."
+        tone="moss"
+      >
+        
           <Button size="lg" render={<Link href="/register" />}>
-            Start free
+            Start building
             <ArrowRightIcon />
           </Button>
-        </div>
-      </section>
+        
+      </PageHero>
 
       {/* How a run is priced */}
-      <section className="border-t border-border bg-surface">
+      <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <Reveal>
             <SectionHeading
@@ -129,7 +117,7 @@ export default function PricingPage() {
           />
         </Reveal>
         <Reveal className="mx-auto mt-10 max-w-2xl" delay={0.08}>
-          <ul className="grid gap-3 rounded-xl border border-border bg-surface p-6 sm:grid-cols-2">
+          <ul className="grid gap-3 tile p-6 sm:grid-cols-2">
             {INCLUDED.map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                 <CheckIcon className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
@@ -141,7 +129,7 @@ export default function PricingPage() {
       </section>
 
       {/* Invoices & payment + managed dev */}
-      <section className="border-t border-border bg-surface">
+      <section className="border-t border-border">
         <div className="mx-auto grid max-w-6xl gap-6 px-6 py-20 lg:grid-cols-2">
           <Reveal>
             <div className="h-full rounded-xl border border-border bg-background p-6">
