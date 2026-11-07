@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LocateFixedIcon, MinusIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { SignalComet } from "@/components/ops/signal-wire";
 import {
   applyOffsets,
   boundsOf,
@@ -57,16 +58,13 @@ function Wire({ d, edge }: { d: string; edge: CanvasEdge }) {
         d={d}
         fill="none"
         stroke={TONE_STROKE[edge.tone]}
-        strokeWidth={edge.tone === "idle" ? 1 : 1.5}
+        strokeWidth={edge.tone === "idle" ? 1 : 1.25}
+        strokeOpacity={moving ? 0.45 : 1}
+        strokeDasharray={edge.soft ? "3 5" : undefined}
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
-        className={moving ? "signal-flow" : edge.soft || edge.tone === "idle" ? "signal-idle" : undefined}
       />
-      {moving ? (
-        <circle r={3} fill="var(--info)" className="signal-pulse">
-          <animateMotion dur="2.4s" repeatCount="indefinite" path={d} />
-        </circle>
-      ) : null}
+      {moving ? <SignalComet path={d} color="var(--info)" /> : null}
     </g>
   );
 }

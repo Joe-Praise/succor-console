@@ -22,6 +22,7 @@ import { deliveryLabel, deliveryTone, TONE_BG, type Tone } from "@/lib/status";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { RollingNumber } from "@/components/charts/rolling-number";
 
 // ---------------------------------------------------------------------------
 // IdChip — a mono identifier with copy. Interactive, so it never triggers row nav.
@@ -196,7 +197,9 @@ export function KpiCard({
         ) : unavailable ? (
           <p className="text-sm text-faint">{unavailable}</p>
         ) : (
-          <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
+          <p className="text-xl font-semibold tracking-tight text-foreground tabular-nums">
+            {typeof value === "string" ? <RollingNumber value={value} /> : value}
+          </p>
         )}
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-[11px]">
@@ -445,7 +448,7 @@ export function StatBand({
   stats,
   className,
 }: {
-  stats: Array<{ label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: Tone; href?: string; hint?: string }>;
+  stats: Array<{ label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: Tone; href?: string; hint?: string; visual?: React.ReactNode }>;
   className?: string;
 }) {
   return (
@@ -456,14 +459,17 @@ export function StatBand({
             <p className="truncate text-[11px] text-faint" title={s.hint}>
               {s.label}
             </p>
-            <p
-              className={cn(
-                "mt-0.5 truncate text-[17px] leading-6 font-semibold tracking-tight tabular-nums",
-                s.tone ? TONE_ICON[s.tone] : "text-foreground",
-              )}
-            >
-              {s.value}
-            </p>
+            <div className="mt-0.5 flex items-center justify-between gap-2">
+              <p
+                className={cn(
+                  "min-w-0 truncate text-[17px] leading-6 font-semibold tracking-tight tabular-nums",
+                  s.tone ? TONE_ICON[s.tone] : "text-foreground",
+                )}
+              >
+                {typeof s.value === "string" ? <RollingNumber value={s.value} /> : s.value}
+              </p>
+              {s.visual ? <span className="w-12 shrink-0">{s.visual}</span> : null}
+            </div>
             {s.sub ? <p className="truncate text-[11px] text-faint">{s.sub}</p> : null}
           </>
         );

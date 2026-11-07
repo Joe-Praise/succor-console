@@ -108,7 +108,7 @@ function Step({
         className={cn(
           "size-1.5 shrink-0 rounded-full transition-colors",
           done ? "bg-success" : active ? "bg-brand" : "bg-faint",
-          pulse ? "animate-pulse" : "",
+          pulse ? "live-dot" : "",
         )}
         aria-hidden
       />

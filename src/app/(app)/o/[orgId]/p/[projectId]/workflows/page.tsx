@@ -42,8 +42,8 @@ const KIND_ICON = { single: CircleDotIcon, fanout: GitForkIcon, gate: ScaleIcon 
 
 const STEP_TONE: Record<string, string> = {
   succeeded: "bg-success",
-  running: "bg-info animate-pulse",
-  critiquing: "bg-info animate-pulse",
+  running: "bg-info live-dot",
+  critiquing: "bg-info live-dot",
   paused: "bg-warning",
   failed: "bg-error",
   pending: "bg-border",
@@ -54,7 +54,7 @@ function StepProgress({ wf }: { wf: Workflow }) {
   return (
     <div className="flex w-full gap-1" aria-label={`Step ${wf.currentStep + 1} of ${wf.steps.length}`}>
       {wf.steps.map((s) => (
-        <span key={s.name} className={cn("h-1.5 flex-1 rounded-full", STEP_TONE[s.status] ?? "bg-border")} />
+        <span key={s.name} className={cn("h-[3px] flex-1 rounded-[1px]", STEP_TONE[s.status] ?? "bg-border")} />
       ))}
     </div>
   );

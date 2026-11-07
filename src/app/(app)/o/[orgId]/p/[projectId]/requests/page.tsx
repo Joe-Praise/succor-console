@@ -8,13 +8,14 @@ import { useProjectScope } from "@/features/projects/use-project-scope";
 import { useCallbacks } from "@/features/projects/hooks";
 import { useRuns } from "@/features/executions/hooks";
 import { useAgentNames } from "@/features/agents/use-agent-names";
-import { buildStream, filterStream, type RequestDirection, type StreamEvent, type StreamFilter } from "@/features/requests/stream";
+import { buildStream, filterStream, type RequestDirection, type StreamEvent, type StreamFilter, isFailure } from "@/features/requests/stream";
 import { useUrlFilters } from "@/lib/url-filters";
 import { clockTime, dateTime, duration, relativeTime, usdPrecise } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EventHistogram } from "@/components/charts/event-histogram";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
 import { QueryError } from "@/components/query-error";
 import { DeliveryBadge, HttpStatus, IdChip, MethodMark } from "@/components/ops/primitives";
@@ -137,8 +138,8 @@ function RequestRow({
             ) : null
           ) : (
             <span className="flex items-center gap-1.5">
-              <span className="h-1 flex-1 overflow-hidden rounded-full bg-raised" aria-hidden>
-                <span className="block h-full rounded-full bg-chart-2/70" style={{ width: `${Math.max(4, (event.delivery.durationMs / maxDuration) * 100)}%` }} />
+              <span className="h-0.5 flex-1 overflow-hidden bg-strong/60" aria-hidden>
+                <span className="meter-fill block h-full bg-chart-2" style={{ width: `${Math.max(4, (event.delivery.durationMs / maxDuration) * 100)}%` }} />
               </span>
               <span className="font-mono text-[11px] text-faint tabular-nums">{duration(event.delivery.durationMs)}</span>
             </span>
@@ -150,6 +151,12 @@ function RequestRow({
     </li>
   );
 }
+
+const TRAFFIC_KINDS = [
+  { key: "in" as const, label: "Requests in", color: "var(--chart-2)" },
+  { key: "out" as const, label: "Callbacks out", color: "var(--chart-3)" },
+  { key: "failed" as const, label: "Failed", color: "var(--error)" },
+];
 
 function RequestsStream() {
   const { orgId, projectId } = useProjectScope();
@@ -173,6 +180,15 @@ function RequestsStream() {
     query: values.q,
   };
   const shown = filterStream(events, filter);
+  const traffic = useMemo(
+    () =>
+      shown.map((e) => ({
+        ts: e.ts.getTime(),
+        kind: isFailure(e) ? ("failed" as const) : e.direction === "in" ? ("in" as const) : ("out" as const),
+      })),
+    [shown],
+  );
+  const span = traffic.length ? { from: Math.min(...traffic.map((t) => t.ts)), to: Math.max(...traffic.map((t) => t.ts)) } : null;
   const maxDuration = Math.max(1, ...shown.map((e) => (e.direction === "out" ? e.delivery.durationMs : 0)));
   const loading = runs.isLoading || callbacks.isLoading;
   const error = runs.isError || callbacks.isError;
@@ -239,6 +255,12 @@ function RequestsStream() {
           description={active ? "Clear a filter to see more." : "Call an agent from your backend or the playground and it appears here."}
         />
       ) : (
+        <>
+        {span ? (
+          <div className="tile px-3 pt-3 pb-2">
+            <EventHistogram ariaLabel="Requests and callbacks over time" events={traffic} kinds={TRAFFIC_KINDS} from={span.from} to={span.to} timeLabel={(t) => dateTime(new Date(t))} />
+          </div>
+        ) : null}
         <div className="tile overflow-hidden">
           <div className="hidden grid-cols-[14px_16px_88px_minmax(0,1fr)_132px_132px_64px] gap-x-2 border-b border-border px-3 py-1.5 font-mono text-[10.5px] tracking-[0.06em] text-faint uppercase md:grid">
             <span />
@@ -263,6 +285,7 @@ function RequestsStream() {
             ))}
           </ul>
         </div>
+        </>
       )}
 
       <p className="text-xs text-faint">

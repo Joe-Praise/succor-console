@@ -28,6 +28,8 @@ import { compactNumber, percent, relativeTime, usd } from "@/lib/format";
 import { BrandMark } from "@/components/brand-mark";
 import type { CatalogEntry, McpServer } from "@/types";
 import type { AgentStat, CanvasData, EndpointStat } from "@/features/canvas/use-canvas-data";
+import { TickMeter } from "@/components/charts/meters";
+import { Sparkline } from "@/components/charts/sparkline";
 
 export const CATEGORY_META: Record<string, { label: string; icon: LucideIcon }> = {
   seo: { label: "SEO", icon: SearchIcon },
@@ -62,21 +64,10 @@ export function StateLine({ tone, children }: { tone: StateTone; children: React
   );
 }
 
-/** Runs per day in the window, as bars. Real data only: no history, no bars. */
+/** Runs per day in the window, as a trend. Real data only: no history, no line. */
 export function Spark({ values, className }: { values: number[]; className?: string }) {
-  const max = Math.max(...values, 1);
   if (values.every((v) => v === 0)) return <span className={cn("h-3.5", className)} aria-hidden />;
-  return (
-    <span className={cn("flex h-3.5 items-end gap-px", className)} aria-hidden>
-      {values.map((v, i) => (
-        <span
-          key={i}
-          className={cn("w-[3px] rounded-[1px]", v > 0 ? "bg-chart-2/70" : "bg-border")}
-          style={{ height: `${v > 0 ? Math.max(18, (v / max) * 100) : 12}%` }}
-        />
-      ))}
-    </span>
-  );
+  return <Sparkline values={values} color="var(--chart-2)" wash={false} className={cn("h-4! w-12!", className)} />;
 }
 
 /** Tile body shared by every kind: icon + title, sub, state line, footer. */
@@ -196,12 +187,7 @@ export function ApiTile({ data }: { data: CanvasData }) {
       footer={
         pct !== null ? (
           <span className="flex w-full items-center gap-2">
-            <span className="h-1 flex-1 overflow-hidden rounded-full bg-raised">
-              <span
-                className={cn("block h-full rounded-full", pct >= 1 ? "bg-error" : pct >= 0.8 ? "bg-warning" : "bg-brand")}
-                style={{ width: `${Math.min(pct * 100, 100)}%` }}
-              />
-            </span>
+            <TickMeter className="min-w-0 flex-1" height={6} value={pct} threshold={0.8} tone={pct >= 1 ? "error" : pct >= 0.8 ? "warning" : "brand"} />
             <span>{percent(pct, 0)} of budget</span>
           </span>
         ) : (

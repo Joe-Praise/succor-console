@@ -12,6 +12,13 @@ Phases 1 to 9 done on this branch, unmerged and unpushed. Verified with `tsc`, e
 
 **Found along the way, not fixed here (backend):** a 400 burns the requestId; `docs/INTEGRATION-GUIDE.md` in agent-service is stale.
 
+**Follow-up, 2026-11-07: finer charts and motion.** The first pass still looked basic (chunky recharts stacks, marching-dash wires), so recharts is gone, replaced by our own SVG kit in `src/components/charts/`, with pure geometry tested in `geometry.test.ts`. Rules for anything added to it:
+
+- Thin marks and one axis, never two. Failures plot below a shared baseline or as rings, so colour isn't the only signal.
+- Chart colours keep their order in `globals.css`. It's validated for colour-blind separation in both themes, so re-run a validator before reordering. Agents get colour by billed rank, so they keep it across metrics.
+- Only recorded values are drawn. A gap stays a gap, a projection is dashed and labelled as a pace, and `burnSeries` won't project before day 3.
+- Range changes hold the old data (`holdWithinProject`, which never crosses projects) and morph; no skeleton flash. Reduced motion turns all of it off.
+
 ## Why
 
 The control-plane work made the console correct but not sharp. The brief: match the level of

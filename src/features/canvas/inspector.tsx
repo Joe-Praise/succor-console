@@ -63,7 +63,7 @@ function RunList({ projectId, base, agentType }: { projectId: string; base: stri
       {rows.map((r) => (
         <li key={r.id}>
           <Link href={`${base}/runs/${r.id}`} className="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-raised">
-            <ToneDot tone={toneOf(r.status)} className={r.status === "running" ? "animate-pulse" : undefined} />
+            <ToneDot tone={toneOf(r.status)} className={r.status === "running" ? "live-dot" : undefined} />
             <span className="font-mono text-[11px] text-foreground">{shortId(r.id)}</span>
             <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{r.status.replace(/_/g, " ")}</span>
             <span className="text-[11px] text-faint tabular-nums">{relativeTime(r.createdAt)}</span>

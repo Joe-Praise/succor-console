@@ -122,12 +122,15 @@ export function EventWaterfall({
   const ticks = [0, 0.25, 0.5, 0.75, 1];
   return (
     <div className="space-y-2">
-      <div className="ml-[38%] flex justify-between font-mono text-[10px] text-faint" aria-hidden>
-        {ticks.map((t) => (
-          <span key={t}>{duration(total * t)}</span>
-        ))}
+      <div className="grid grid-cols-[38%_1fr] gap-3 px-2" aria-hidden>
+        <span />
+        <div className="flex justify-between font-mono text-[10px] text-faint tabular-nums">
+          {ticks.map((t) => (
+            <span key={t}>{duration(total * t)}</span>
+          ))}
+        </div>
       </div>
-      <ol className="space-y-0.5">
+      <ol>
         {events.map((e) => {
           const end = (e.sinceStartMs / total) * 100;
           const startMs = e.sincePreviousMs === null ? e.sinceStartMs : e.sinceStartMs - e.sincePreviousMs;
@@ -138,20 +141,19 @@ export function EventWaterfall({
                 type="button"
                 onClick={() => onSelect(e.key)}
                 className={cn(
-                  "grid w-full grid-cols-[38%_1fr] items-center gap-3 rounded-md px-2 py-1 text-left transition-colors",
+                  "grid w-full grid-cols-[38%_1fr] items-center gap-3 rounded-[4px] px-2 text-left transition-colors",
                   selectedKey === e.key ? "bg-brand-muted" : "hover:bg-raised",
                 )}
               >
                 <span className="truncate text-xs text-foreground">{e.title}</span>
-                <span className="relative h-4">
-                  <span className="absolute inset-y-1.75 right-0 left-0 rounded-full bg-border/60" aria-hidden />
+                <span className="time-ruler relative h-5">
                   <span
-                    className="absolute inset-y-1.5 rounded-full bg-raised"
+                    className={cn("meter-fill absolute top-1/2 h-px -translate-y-1/2 opacity-70", TONE_BG[e.tone])}
                     style={{ left: `${start}%`, width: `${Math.max(0, end - start)}%` }}
                     aria-hidden
                   />
                   <span
-                    className={cn("absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-surface", TONE_BG[e.tone])}
+                    className={cn("absolute top-1/2 size-1.75 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-surface", TONE_BG[e.tone])}
                     style={{ left: `${end}%` }}
                     aria-hidden
                   />

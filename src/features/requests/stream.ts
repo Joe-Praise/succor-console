@@ -87,7 +87,7 @@ export interface StreamFilter {
   query: string;
 }
 
-function isFailure(e: StreamEvent): boolean {
+export function isFailure(e: StreamEvent): boolean {
   return e.direction === "out" ? !e.delivery.ok : e.run.status === "dead" || e.run.status === "rejected";
 }
 

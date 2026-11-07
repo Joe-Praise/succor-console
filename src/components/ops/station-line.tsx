@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckIcon, LoaderCircleIcon, MinusIcon, PauseIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { SignalWire } from "@/components/ops/signal-wire";
 
 /**
  * The signal line: stations a request passes through, joined by a wire that moves while
@@ -45,18 +46,11 @@ function wireFor(state: StationState, next: StationState): "passed" | "moving" |
 
 function Wire({ kind }: { kind: "passed" | "moving" | "idle" }) {
   return (
-    <svg className="absolute top-1/2 left-0 h-1 w-full -translate-y-1/2 overflow-visible" aria-hidden preserveAspectRatio="none" viewBox="0 0 100 2">
-      <line
-        x1="0"
-        y1="1"
-        x2="100"
-        y2="1"
-        vectorEffect="non-scaling-stroke"
-        strokeWidth={kind === "passed" ? 1.5 : 1.25}
-        stroke={kind === "passed" ? "var(--success)" : kind === "moving" ? "var(--info)" : "var(--wire)"}
-        className={kind === "moving" ? "signal-flow" : kind === "idle" ? "signal-idle" : undefined}
-      />
-    </svg>
+    <SignalWire
+      className="absolute top-1/2 left-0 w-full -translate-y-1/2"
+      moving={kind === "moving"}
+      color={kind === "passed" ? "var(--success)" : kind === "moving" ? "var(--info)" : "var(--wire)"}
+    />
   );
 }
 

@@ -30,6 +30,20 @@ export function usdPrecise(n: number | null | undefined): string {
   });
 }
 
+/** Axis labels for money: as short as the value allows ($8, $2.50, $1.2K). */
+export function usdAxis(n: number): string {
+  if (Math.abs(n) >= 1000) return `$${compactNumber(n)}`;
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+}
+
+/** Axis labels for a duration stop: 300ms, 10s, 3m. */
+export function durationAxis(ms: number): string {
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+  if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m`;
+  return `${Math.round(ms / 3_600_000)}h`;
+}
+
 /** Compact integers: 1,204 · 3.9K · 1.67M. */
 export function compactNumber(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";

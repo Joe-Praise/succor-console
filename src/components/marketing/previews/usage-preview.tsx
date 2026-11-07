@@ -1,9 +1,10 @@
 "use client";
 
 import { stackBy, totalsOf } from "@/features/usage/series";
-import { compactNumber, percent, usd, usdPrecise } from "@/lib/format";
+import { compactNumber, percent, usd, usdAxis, usdPrecise } from "@/lib/format";
 import { KpiCard } from "@/components/ops/primitives";
-import { StackedBars, LegendTable } from "@/components/ops/charts";
+import { BreakdownRows } from "@/components/charts/breakdown";
+import { TimeChart } from "@/components/charts/time-chart";
 import { PreviewFrame } from "./preview-frame";
 import { SAMPLE_USAGE } from "./fixtures";
 
@@ -36,13 +37,13 @@ export function UsagePreview({ className }: { className?: string }) {
           />
           <KpiCard label="Failure rate" value={percent(t.failed / t.runs)} sub="from recorded outcomes" />
         </div>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="tile p-3">
             <p className="mb-2 text-xs font-semibold text-muted-foreground">Spend (billed) per day</p>
-            <StackedBars data={s.data} xKey="label" series={s.series} height={180} valueFormatter={(v) => usd(v)} />
+            <TimeChart ariaLabel="Billed spend per day, stacked by agent" rows={s.data} series={s.series} stacked legend={false} height={180} format={(v) => usd(v)} axisFormat={usdAxis} />
           </div>
           <div className="tile p-3">
-            <LegendTable rows={s.legend} formatter={(v) => usd(v)} />
+            <BreakdownRows rows={s.legend.map((l) => ({ ...l, spark: s.data.map((r) => Number(r[l.key] ?? 0)) }))} format={(v) => usd(v)} share={false} />
           </div>
         </div>
       </div>

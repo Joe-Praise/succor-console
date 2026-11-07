@@ -1,16 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { toast } from "sonner";
+import { TimeChart } from "@/components/charts/time-chart";
 import {
   Loader2Icon,
   KeyRoundIcon,
@@ -450,24 +442,14 @@ export default function DesignSystemPage() {
         <Section title="Chart" spec="Warm categorical palette; soft 15%-alpha area fill, no saturated gradients">
           <div className="rounded-xl border border-hairline bg-surface p-4">
             <div className="h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={CHART_DATA} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                  <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="d" stroke="var(--chart-axis)" tick={{ fill: "var(--chart-axis)", fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--chart-axis)" tick={{ fill: "var(--chart-axis)", fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
-                  <RTooltip
-                    cursor={{ stroke: "var(--chart-grid)" }}
-                    contentStyle={{
-                      background: "var(--overlay)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    labelStyle={{ color: "var(--muted-foreground)" }}
-                  />
-                  <Area type="monotone" dataKey="v" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.15} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <TimeChart
+                ariaLabel="Sample series"
+                rows={CHART_DATA}
+                xKey="d"
+                series={[{ key: "v", label: "Value", color: "var(--chart-1)" }]}
+                format={(v) => v.toLocaleString()}
+                endValue
+              />
             </div>
           </div>
         </Section>

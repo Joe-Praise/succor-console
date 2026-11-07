@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 import { cn } from "@/lib/utils";
 import { usd } from "@/lib/format";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { TickMeter } from "@/components/charts/meters";
 
 interface BudgetMeterProps {
   spent: number;
@@ -14,32 +12,13 @@ interface BudgetMeterProps {
 }
 
 /**
- * Budget meter (§4.5): horizontal bar + `$X of $Y (Z%)` in tabular-nums.
- * States: ok (accent, <80%) · warn (amber, ≥80%) · exceeded (error + 45°
- * stripe overlay + banner). Fill animates once on load, unless reduced motion.
+ * Budget meter (§4.5): fine ticks + `$X of $Y (Z%)` in tabular-nums.
+ * States: ok (accent, <80%) · warn (amber, ≥80%) · exceeded (error + banner).
+ * The mark at 80% is where the platform alert fires.
  */
 export function BudgetMeter({ spent, budget, className }: BudgetMeterProps) {
-  const fillRef = useRef<HTMLDivElement>(null);
   const pct = budget && budget > 0 ? (spent / budget) * 100 : 0;
-  const clamped = Math.min(pct, 100);
   const state = pct >= 100 ? "exceeded" : pct >= 80 ? "warn" : "ok";
-
-  useEffect(() => {
-    const el = fillRef.current;
-    if (!el || budget == null) return;
-    if (prefersReducedMotion()) {
-      el.style.width = `${clamped}%`;
-      return;
-    }
-    const anim = gsap.fromTo(
-      el,
-      { width: "0%" },
-      { width: `${clamped}%`, duration: 0.6, ease: "power2.out" },
-    );
-    return () => {
-      anim.kill();
-    };
-  }, [clamped, budget]);
 
   if (budget == null) {
     return (
@@ -50,18 +29,10 @@ export function BudgetMeter({ spent, budget, className }: BudgetMeterProps) {
             {usd(spent)}
           </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-raised" />
         <p className="text-xs text-faint">No budget cap set.</p>
       </div>
     );
   }
-
-  const fillColor =
-    state === "exceeded"
-      ? "bg-error"
-      : state === "warn"
-        ? "bg-warning"
-        : "bg-brand";
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -83,24 +54,12 @@ export function BudgetMeter({ spent, budget, className }: BudgetMeterProps) {
           {Math.round(pct)}%
         </span>
       </div>
-      <div
-        className="h-2 w-full overflow-hidden rounded-full bg-raised"
-        role="progressbar"
-        aria-valuenow={Math.round(pct)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Budget ${Math.round(pct)}% used`}
-      >
-        <div
-          ref={fillRef}
-          style={{ width: `${clamped}%` }}
-          className={cn("relative h-full rounded-full", fillColor)}
-        >
-          {state === "exceeded" ? (
-            <span className="stripe-overlay absolute inset-0" aria-hidden />
-          ) : null}
-        </div>
-      </div>
+      <TickMeter
+        value={pct / 100}
+        threshold={0.8}
+        tone={state === "exceeded" ? "error" : state === "warn" ? "warning" : "brand"}
+        label={`Budget ${Math.round(pct)}% used`}
+      />
       {state === "exceeded" ? (
         <p className="text-xs text-error">
           Budget exceeded — agents return{" "}

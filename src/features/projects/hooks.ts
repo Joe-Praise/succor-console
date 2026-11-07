@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import * as projectsApi from "@/api/projects";
 import { orgProjectsKey } from "@/features/orgs/hooks";
+import { holdWithinProject } from "@/lib/hold-previous";
 
 export const setupKey = (projectId: string) => ["projects", projectId, "setup"] as const;
 export const keysKey = (projectId: string) => ["projects", projectId, "keys"] as const;
@@ -84,6 +85,7 @@ export function useUsage(projectId: string, params: projectsApi.UsageParams = {}
     queryKey: usageKey(projectId, params),
     queryFn: () => projectsApi.getUsage(projectId, params),
     enabled: !!projectId,
+    placeholderData: holdWithinProject(projectId),
   });
 }
 

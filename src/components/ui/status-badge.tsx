@@ -130,7 +130,7 @@ export function StatusBadge({
         className,
       )}
     >
-      <span className={cn("size-1.5 rounded-full", s.dot, s.pulse && "animate-pulse")} aria-hidden />
+      <span className={cn("size-1.5 rounded-full", s.dot, s.pulse && "live-dot")} aria-hidden />
       {label ?? s.label}
     </span>
   );

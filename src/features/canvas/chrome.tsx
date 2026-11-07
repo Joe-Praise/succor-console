@@ -174,7 +174,7 @@ export function ActivityDock({ data, base, projectId, shifted }: { data: CanvasD
             events.map((e) => (
               <li key={e.key}>
                 <Link href={e.href} className="flex items-center gap-2 px-3 py-1.5 transition-colors hover:bg-raised">
-                  <ToneDot tone={e.tone} className={e.live ? "animate-pulse" : undefined} />
+                  <ToneDot tone={e.tone} className={e.live ? "live-dot" : undefined} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs text-foreground">{e.title}</span>
                     <span className="block truncate text-[11px] text-faint">

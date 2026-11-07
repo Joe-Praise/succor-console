@@ -8,6 +8,7 @@ import { dotClass, LIVE_JOB_STATUSES } from "@/lib/status";
 import { shortId } from "@/lib/format";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
 import type { WorkflowStep } from "@/types";
+import { SignalWire } from "@/components/ops/signal-wire";
 
 /**
  * A job id as a status chip. The status comes from ONE runs-list query for the whole
@@ -31,7 +32,7 @@ export function JobChip({
       className="inline-flex h-5 items-center gap-1.5 rounded-[4px] border border-border px-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:border-strong hover:text-foreground"
     >
       <span
-        className={cn("size-1.5 rounded-full", status ? dotClass(status) : "bg-faint", status && LIVE_JOB_STATUSES.has(status) && "animate-pulse")}
+        className={cn("size-1.5 rounded-full", status ? dotClass(status) : "bg-faint", status && LIVE_JOB_STATUSES.has(status) && "live-dot")}
         aria-hidden
       />
       {label ?? shortId(jobId, 6)}
@@ -48,17 +49,11 @@ const KIND_META: Record<string, { label: string; icon: typeof GitForkIcon; blurb
 /** The joint between two steps. It moves while the step before it is working. */
 function Joint({ state }: { state: "live" | "passed" | "idle" }) {
   return (
-    <svg className="mx-1 hidden h-3 w-8 shrink-0 self-center overflow-visible lg:block" viewBox="0 0 32 12" aria-hidden>
-      <line
-        x1="0"
-        y1="6"
-        x2="32"
-        y2="6"
-        strokeWidth={state === "idle" ? 1 : 1.5}
-        stroke={state === "live" ? "var(--info)" : state === "passed" ? "var(--success)" : "var(--wire)"}
-        className={state === "live" ? "signal-flow" : state === "idle" ? "signal-idle" : undefined}
-      />
-    </svg>
+    <SignalWire
+      className="mx-1 hidden w-8 shrink-0 self-center lg:block"
+      moving={state === "live"}
+      color={state === "live" ? "var(--info)" : state === "passed" ? "var(--success)" : "var(--wire)"}
+    />
   );
 }
 

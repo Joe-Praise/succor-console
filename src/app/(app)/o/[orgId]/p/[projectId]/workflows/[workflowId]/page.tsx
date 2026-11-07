@@ -42,7 +42,7 @@ function JobSpans({
   );
   const span = end - start;
   return (
-    <div className="space-y-1">
+    <div>
       {sorted.map((r) => {
         const s = r.createdAt.getTime() - start;
         const e = (LIVE_JOB_STATUSES.has(r.status) ? now : r.updatedAt.getTime()) - start;
@@ -50,15 +50,15 @@ function JobSpans({
           <Link
             key={r.id}
             href={`${base}/runs/${r.id}`}
-            className="grid grid-cols-[minmax(0,34%)_1fr_72px] items-center gap-3 rounded-md px-2 py-1 text-xs transition-colors hover:bg-raised"
+            className="grid grid-cols-[minmax(0,34%)_1fr_72px] items-center gap-3 rounded-[4px] px-2 text-xs transition-colors hover:bg-raised"
           >
             <span className="truncate">
               <span className="text-foreground">{nameOf(r.agentType)}</span>{" "}
               <span className="font-mono text-faint">{shortId(r.id, 6)}</span>
             </span>
-            <span className="relative h-3 rounded-full bg-border/50">
+            <span className="time-ruler relative h-5">
               <span
-                className={cn("absolute inset-y-0 rounded-full opacity-80", dotClass(r.status))}
+                className={cn("meter-fill absolute top-1/2 h-0.5 -translate-y-1/2 rounded-full", dotClass(r.status))}
                 style={{ left: `${(s / span) * 100}%`, width: `${Math.max(0.8, ((e - s) / span) * 100)}%` }}
               />
             </span>

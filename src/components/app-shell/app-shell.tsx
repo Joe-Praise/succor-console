@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -43,6 +43,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette, OPEN_COMMAND_PALETTE } from "@/components/command-palette";
+import { useSlidingMark } from "@/lib/use-sliding-mark";
 import { useMe, useLogout } from "@/features/auth/hooks";
 import type { Me, OrgRef } from "@/types";
 
@@ -96,14 +97,57 @@ function TabLink({ tab, active, projectId, tall }: { tab: NavTab; active: boolea
       className={cn(
         "relative flex shrink-0 items-center px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors",
         tall ? "h-12" : "h-9",
-        active
-          ? "text-foreground after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-brand"
-          : "text-muted-foreground hover:text-foreground",
+        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
       {tab.label}
       {tab.id === "approvals" && projectId ? <ApprovalsCount projectId={projectId} /> : null}
     </Link>
+  );
+}
+
+/** A row of top-level tabs, with one ink that slides from the old tab to the new. */
+function TabRow({ tabs, activeId, projectId, tall, className }: { tabs: NavTab[]; activeId: string | null; projectId: string | null; tall?: boolean; className?: string }) {
+  const navRef = useRef<HTMLElement>(null);
+  const inkRef = useRef<HTMLSpanElement>(null);
+  useSlidingMark(navRef, inkRef, '[aria-current="page"]', activeId, 10);
+  return (
+    <nav ref={navRef} aria-label="Sections" className={cn("relative", className)}>
+      {tabs.map((t) => (
+        <TabLink key={t.id} tab={t} active={activeId === t.id} projectId={projectId} tall={tall} />
+      ))}
+      <span ref={inkRef} className="tab-ink" aria-hidden />
+    </nav>
+  );
+}
+
+/** The pages under the active tab, with a pill that slides between them. */
+function SubPageRow({ pages, pathname, label }: { pages: NonNullable<ReturnType<typeof tabPages>>; pathname: string; label: string }) {
+  const navRef = useRef<HTMLElement>(null);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const activeHref = pages.find((i) => isActive(pathname, i))?.href ?? null;
+  useSlidingMark(navRef, pillRef, '[aria-current="page"]', activeHref);
+  return (
+    <nav ref={navRef} aria-label={`${label} pages`} className="no-scrollbar relative flex h-9 items-center gap-0.5 overflow-x-auto border-t border-hairline px-3">
+      <span ref={pillRef} className="tab-pill h-6" aria-hidden />
+      {pages.map((i) => {
+        const active = isActive(pathname, i);
+        return (
+          <Link
+            key={i.href}
+            href={i.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative flex h-6 shrink-0 items-center gap-1.5 rounded-[4px] px-2 text-xs font-medium whitespace-nowrap transition-colors",
+              active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <i.icon className={cn("size-3.5 transition-colors", active ? "text-brand" : "text-faint")} strokeWidth={1.75} />
+            {i.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -282,11 +326,7 @@ function TopBar({ me }: { me: Me }) {
 
         {/* Tabs share the bar on wide screens and drop to their own row below that. */}
         {tabs.length ? (
-          <nav aria-label="Sections" className="ml-auto hidden items-center xl:flex">
-            {tabs.map((t) => (
-              <TabLink key={t.id} tab={t} active={activeTab?.id === t.id} projectId={projectId} tall />
-            ))}
-          </nav>
+          <TabRow tabs={tabs} activeId={activeTab?.id ?? null} projectId={projectId} tall className="ml-auto hidden items-center xl:flex" />
         ) : null}
 
         <div className={cn("flex shrink-0 items-center gap-0.5 pl-3", !tabs.length && "ml-auto", tabs.length && "ml-auto xl:ml-0 xl:border-l xl:border-border")}>
@@ -306,33 +346,11 @@ function TopBar({ me }: { me: Me }) {
       </div>
 
       {tabs.length ? (
-        <nav aria-label="Sections" className="no-scrollbar flex items-center overflow-x-auto border-t border-hairline px-1 xl:hidden">
-          {tabs.map((t) => (
-            <TabLink key={t.id} tab={t} active={activeTab?.id === t.id} projectId={projectId} />
-          ))}
-        </nav>
+        <TabRow tabs={tabs} activeId={activeTab?.id ?? null} projectId={projectId} className="no-scrollbar flex items-center overflow-x-auto border-t border-hairline px-1 xl:hidden" />
       ) : null}
 
       {subPages ? (
-        <nav aria-label={`${activeTab?.label} pages`} className="no-scrollbar flex h-9 items-center gap-0.5 overflow-x-auto border-t border-hairline px-3">
-          {subPages.map((i) => {
-            const active = isActive(pathname, i);
-            return (
-              <Link
-                key={i.href}
-                href={i.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex h-6 shrink-0 items-center gap-1.5 rounded-[4px] px-2 text-xs font-medium whitespace-nowrap transition-colors",
-                  active ? "bg-raised text-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <i.icon className={cn("size-3.5", active ? "text-brand" : "text-faint")} strokeWidth={1.75} />
-                {i.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <SubPageRow pages={subPages} pathname={pathname} label={activeTab?.label ?? "Section"} />
       ) : null}
     </header>
   );

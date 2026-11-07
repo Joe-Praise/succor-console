@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import * as execApi from "@/api/executions";
 import { ApiError } from "@/api/client";
+import { holdWithinProject } from "@/lib/hold-previous";
 import { LIVE_JOB_STATUSES, PARKED_JOB_STATUSES, TERMINAL_DELIVERY_STATUSES } from "@/lib/status";
 import type { ExecutionRecord } from "@/types";
 
@@ -135,6 +136,7 @@ export function useOpsSummary(projectId: string, range: { from?: string; to?: st
     queryKey: opsSummaryKey(projectId, range),
     queryFn: () => execApi.getOpsSummary(projectId, range),
     enabled: !!projectId,
+    placeholderData: holdWithinProject(projectId),
     retry: retryUnlessFinal,
     refetchInterval: 30_000,
   });

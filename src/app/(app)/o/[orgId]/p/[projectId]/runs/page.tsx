@@ -46,7 +46,7 @@ function LiveStrip({ projectId }: { projectId: string }) {
       <span className="text-faint">Right now</span>
       {parts.map(([label, n, tone]) => (
         <span key={label} className="inline-flex items-center gap-1.5">
-          <ToneDot tone={n > 0 ? tone : "faint"} className={n > 0 && tone === "info" ? "animate-pulse" : undefined} />
+          <ToneDot tone={n > 0 ? tone : "faint"} className={n > 0 && tone === "info" ? "live-dot" : undefined} />
           <span className="font-medium text-foreground tabular-nums">{n}</span> {label}
         </span>
       ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { DownloadIcon, ScrollTextIcon } from "lucide-react";
 
 import { useProjectScope } from "@/features/projects/use-project-scope";
@@ -9,6 +9,7 @@ import { useAgentNames } from "@/features/agents/use-agent-names";
 import { useUrlFilters } from "@/lib/url-filters";
 import { toCsv, download } from "@/lib/csv";
 import { duration, dateTime, usdPrecise, tokens, shortId } from "@/lib/format";
+import { FAILED_RUN_STATUSES } from "@/lib/status";
 import type { UsageRecord } from "@/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AnyStatusBadge } from "@/components/ui/status-badge";
 import { DataTable, type Column } from "@/components/ops/data-table";
 import { CursorPager } from "@/components/ops/primitives";
+import { EventHistogram } from "@/components/charts/event-histogram";
 import { FilterBar, SelectFilter, SearchFilter } from "@/components/ops/filters";
 
 const FILTER_KEYS = ["status", "agent", "model", "job", "from", "to"] as const;
@@ -43,7 +45,9 @@ function LogsExplorer() {
     to: values.to || undefined,
     limit: 100,
   });
-  const rows = records.data?.pages.flatMap((p) => p.records) ?? [];
+  const rows = useMemo(() => records.data?.pages.flatMap((p) => p.records) ?? [], [records.data]);
+  const traffic = useMemo(() => rows.map((r) => ({ ts: r.ts.getTime(), kind: FAILED_RUN_STATUSES.has(r.status) ? ("failed" as const) : ("ok" as const) })), [rows]);
+  const span = traffic.length > 1 ? { from: Math.min(...traffic.map((t) => t.ts)), to: Math.max(...traffic.map((t) => t.ts)) } : null;
   const base = `/o/${orgId}/p/${projectId}`;
   const models = [...new Set(rows.map((r) => r.model))].sort();
 
@@ -140,6 +144,22 @@ function LogsExplorer() {
             all time
           </button>
         </p>
+      ) : null}
+
+      {span ? (
+        <div className="tile px-3 pt-3 pb-2">
+          <EventHistogram
+            ariaLabel="Priced runs over time, from the records loaded below"
+            events={traffic}
+            kinds={[
+              { key: "ok", label: "Succeeded", color: "var(--chart-2)" },
+              { key: "failed", label: "Failed", color: "var(--error)" },
+            ]}
+            from={span.from}
+            to={span.to}
+            timeLabel={(t) => dateTime(new Date(t))}
+          />
+        </div>
       ) : null}
 
       <DataTable

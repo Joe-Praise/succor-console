@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { SignalComet } from "@/components/ops/signal-wire";
 
 /**
  * The Succor backdrop: dusk over layered ridgelines, relay towers with lit lanterns,
@@ -218,15 +219,10 @@ export function NightRidge({
 
         {towers
           ? TOWERS.slice(0, -1).map((t, i) => (
-              <path
-                key={i}
-                d={arcBetween(t, TOWERS[i + 1]!)}
-                stroke={signal}
-                strokeWidth={1.2}
-                strokeOpacity={0.7}
-                fill="none"
-                className={animated ? "signal-flow" : "signal-idle"}
-              />
+              <g key={i}>
+                <path d={arcBetween(t, TOWERS[i + 1]!)} stroke={signal} strokeWidth={1} strokeOpacity={0.4} fill="none" />
+                {animated ? <SignalComet path={arcBetween(t, TOWERS[i + 1]!)} color={signal} dur={3.4 + i * 0.4} /> : null}
+              </g>
             ))
           : null}
 

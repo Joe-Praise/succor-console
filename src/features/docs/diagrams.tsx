@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/components/code-block";
+import { SignalWire } from "@/components/ops/signal-wire";
 
 // ---------------------------------------------------------------------------
 // The journey: every request, station by station. It plays until you touch it.
@@ -55,18 +56,7 @@ export function RequestJourney() {
                     )}
                   />
                   {i < JOURNEY.length - 1 ? (
-                    <svg className="mx-1 h-1 w-0 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden>
-                      <line
-                        x1="0"
-                        y1="1"
-                        x2="100"
-                        y2="1"
-                        vectorEffect="non-scaling-stroke"
-                        stroke={passed ? "var(--brand)" : here ? "var(--brand)" : "var(--wire)"}
-                        strokeWidth={passed ? 1.5 : 1.25}
-                        className={here ? "signal-flow" : passed ? undefined : "signal-idle"}
-                      />
-                    </svg>
+                    <SignalWire className="mx-1 w-0 flex-1" moving={here} color={passed || here ? "var(--brand)" : "var(--wire)"} />
                   ) : null}
                 </span>
                 <span className={cn("mt-1.5 block text-xs font-medium whitespace-nowrap transition-colors", here ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
@@ -243,7 +233,7 @@ export function DeliverySimulator() {
               <p className={cn("font-mono text-[11px]", r.outcome === "delivered" ? "text-success" : "text-warning")}>{r.label}</p>
             </div>
             <svg className="mr-3 h-3 w-12 shrink-0 overflow-visible" viewBox="0 0 48 12" aria-hidden>
-              <line x1="0" y1="6" x2="48" y2="6" stroke="var(--wire)" strokeWidth="1.25" className="signal-idle" />
+              <line x1="0" y1="6" x2="48" y2="6" stroke="var(--wire)" strokeWidth="1" />
             </svg>
           </div>
         ))}

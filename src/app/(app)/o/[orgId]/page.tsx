@@ -7,7 +7,7 @@ import { PlusIcon, FolderKanbanIcon } from "lucide-react";
 import { useOrgCtx } from "@/features/orgs/org-context";
 import { useOrg, useOrgBillingSummary } from "@/features/orgs/hooks";
 import { useOpsSummary } from "@/features/executions/hooks";
-import { successRate, undeliverable } from "@/features/executions/ops";
+import { fillDaily, successRate, undeliverable } from "@/features/executions/ops";
 import { rangeBounds } from "@/lib/time-range";
 import { compactNumber, percent, usd } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -19,41 +19,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { BudgetMeter } from "@/components/ui/budget-meter";
 import { StatusBadge, type Status } from "@/components/ui/status-badge";
 import { KpiCard } from "@/components/ops/primitives";
+import { Sparkline } from "@/components/charts/sparkline";
 
 type ProjectSpend = OrgBillingSummary["byProject"][number];
-
-/** The project's request path in miniature: live work moves, trouble shows at its station. */
-function MiniLine({ live, waiting, lost }: { live: number; waiting: number; lost: number }) {
-  const stations = [
-    { key: "in", tone: live ? "bg-info" : "bg-wire" },
-    { key: "work", tone: live ? "bg-info" : "bg-wire" },
-    { key: "hold", tone: waiting ? "bg-warning" : "bg-wire" },
-    { key: "out", tone: lost ? "bg-error" : "bg-wire" },
-  ];
-  return (
-    <div className="flex items-center" aria-hidden>
-      {stations.map((s, i) => (
-        <span key={s.key} className="flex flex-1 items-center last:flex-none">
-          <span className={cn("size-1.5 shrink-0 rounded-full", s.tone, s.tone === "bg-info" && "animate-pulse")} />
-          {i < stations.length - 1 ? (
-            <svg className="mx-0.5 h-1 w-0 flex-1 overflow-visible" viewBox="0 0 100 2" preserveAspectRatio="none">
-              <line
-                x1="0"
-                y1="1"
-                x2="100"
-                y2="1"
-                vectorEffect="non-scaling-stroke"
-                stroke={live ? "var(--info)" : "var(--wire)"}
-                strokeWidth="1"
-                className={live ? "signal-flow" : "signal-idle"}
-              />
-            </svg>
-          ) : null}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 function HealthStat({ label, value, tone }: { label: string; value: string; tone?: "warning" | "error" | "info" }) {
   return (
@@ -111,7 +79,7 @@ function ProjectHealthCard({
         <p className="text-xs text-faint">Health unavailable for your role.</p>
       ) : (
         <>
-        <MiniLine live={live} waiting={waiting} lost={lost} />
+        <Sparkline values={fillDaily(s.daily, s.from, s.to).map((d) => d.succeeded + d.failed + d.other)} color="var(--chart-2)" className="h-9!" />
         <div className="grid grid-cols-4 gap-2">
           <HealthStat
             label="Success 7d"

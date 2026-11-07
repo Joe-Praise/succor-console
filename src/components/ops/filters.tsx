@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RefreshCwIcon, SearchIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { RANGE_PRESETS, type RangeKey } from "@/lib/time-range";
+import { useSlidingMark } from "@/lib/use-sliding-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -99,8 +100,12 @@ export function TimeRangeTabs({
   onChange: (v: RangeKey) => void;
   presets?: readonly RangeKey[];
 }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const markRef = useRef<HTMLSpanElement>(null);
+  useSlidingMark(boxRef, markRef, '[aria-checked="true"]', value);
   return (
-    <div role="radiogroup" aria-label="Time range" className="inline-flex h-7 items-center rounded-lg border border-border p-0.5">
+    <div ref={boxRef} role="radiogroup" aria-label="Time range" className="relative inline-flex h-7 items-center rounded-lg border border-border p-0.5">
+      <span ref={markRef} className="tab-pill inset-y-0.5" aria-hidden />
       {RANGE_PRESETS.filter((p) => presets.includes(p.key)).map((p) => (
         <button
           key={p.key}
@@ -109,8 +114,8 @@ export function TimeRangeTabs({
           aria-checked={value === p.key}
           onClick={() => onChange(p.key)}
           className={cn(
-            "h-full rounded-[4px] px-2 text-xs font-medium tabular-nums transition-colors",
-            value === p.key ? "bg-raised text-foreground" : "text-muted-foreground hover:text-foreground",
+            "relative h-full rounded-[4px] px-2 text-xs font-medium tabular-nums transition-colors",
+            value === p.key ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
           {p.label}

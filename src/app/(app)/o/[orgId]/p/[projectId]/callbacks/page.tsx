@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { WebhookIcon, RefreshCwIcon } from "lucide-react";
 
@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SecretReveal } from "@/components/secret-reveal";
 import { DataTable, type Column } from "@/components/ops/data-table";
 import { FilterBar, SelectFilter } from "@/components/ops/filters";
+import { EventHistogram } from "@/components/charts/event-histogram";
 import { Callout, HttpStatus, MethodMark } from "@/components/ops/primitives";
 
 const FILTER_KEYS = ["result", "agent"] as const;
@@ -36,7 +37,9 @@ function CallbacksExplorer() {
   const rotate = useRotateCallbackKey(projectId);
   const [rotated, setRotated] = useState<string | null>(null);
   const base = `/o/${orgId}/p/${projectId}`;
-  const rows = callbacks.data?.deliveries ?? [];
+  const rows = useMemo(() => callbacks.data?.deliveries ?? [], [callbacks.data]);
+  const traffic = useMemo(() => rows.map((d) => ({ ts: d.ts.getTime(), kind: d.ok ? ("ok" as const) : ("failed" as const) })), [rows]);
+  const span = traffic.length > 1 ? { from: Math.min(...traffic.map((t) => t.ts)), to: Math.max(...traffic.map((t) => t.ts)) } : null;
 
   const columns: Column<CallbackDelivery>[] = [
     { id: "ts", header: "Time", cell: (d) => <span className="text-muted-foreground">{dateTime(d.ts)}</span> },
@@ -116,6 +119,22 @@ function CallbacksExplorer() {
           onChange={(v) => set({ agent: v })}
         />
       </FilterBar>
+
+      {span ? (
+        <div className="tile px-3 pt-3 pb-2">
+          <EventHistogram
+            ariaLabel="Callback attempts over time, from the deliveries loaded below"
+            events={traffic}
+            kinds={[
+              { key: "ok", label: "Delivered", color: "var(--chart-3)" },
+              { key: "failed", label: "Failed", color: "var(--error)" },
+            ]}
+            from={span.from}
+            to={span.to}
+            timeLabel={(t) => dateTime(new Date(t))}
+          />
+        </div>
+      ) : null}
 
       <DataTable
         rows={rows}

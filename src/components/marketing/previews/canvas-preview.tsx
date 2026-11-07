@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { boundsOf, buildCanvasGraph, fitView, wirePath, type CanvasEdge } from "@/features/canvas/graph";
 import { PreviewFrame } from "./preview-frame";
+import { SignalComet } from "@/components/ops/signal-wire";
 
 /**
  * The project canvas as a marketing shot: the real graph builder and wire geometry, fed
@@ -106,12 +107,8 @@ export function CanvasPreview({ className }: { className?: string }) {
                 const d = wirePath(a, b);
                 return (
                   <g key={e.id}>
-                    <path d={d} fill="none" stroke={TONE[e.tone]} strokeWidth={e.tone === "idle" ? 1 : 1.5} vectorEffect="non-scaling-stroke" className={e.tone === "live" ? "signal-flow" : e.tone === "idle" ? "signal-idle" : undefined} />
-                    {e.tone === "live" ? (
-                      <circle r={3} fill="var(--info)" className="signal-pulse">
-                        <animateMotion dur="2.4s" repeatCount="indefinite" path={d} />
-                      </circle>
-                    ) : null}
+                    <path d={d} fill="none" stroke={TONE[e.tone]} strokeWidth={e.tone === "idle" ? 1 : 1.25} strokeOpacity={e.tone === "live" ? 0.45 : 1} vectorEffect="non-scaling-stroke" />
+                    {e.tone === "live" ? <SignalComet path={d} color="var(--info)" /> : null}
                   </g>
                 );
               })}
